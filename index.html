@@ -10,10 +10,25 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-    <!-- Open Graph — overwritten per-duel by the ShareLink screen via document.title / meta updates -->
+    <!-- Open Graph — static site-wide default. Note: link-unfurling crawlers
+         (iMessage, Slack, etc.) fetch this HTML without running JS, so a truly
+         per-duel preview (custom title naming the setter, etc.) would need a
+         Netlify Edge Function rendering these tags server-side per slug —
+         not yet built. This default at least gives every duel link a proper
+         branded card instead of a bare URL. -->
     <meta property="og:title" content="Netera Duel" />
     <meta property="og:description" content="A friend has challenged you to a word duel." />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://neteraduel.com/" />
+    <meta property="og:image" content="https://neteraduel.com/og-image.png" />
+    <meta property="og:image:width" content="1536" />
+    <meta property="og:image:height" content="1024" />
+    <meta property="og:image:alt" content="Netera Duel" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Netera Duel" />
+    <meta name="twitter:description" content="A friend has challenged you to a word duel." />
+    <meta name="twitter:image" content="https://neteraduel.com/og-image.png" />
 
     <title>Netera Duel</title>
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import HintBanner from '../components/HintBanner'
 import GuessGrid from '../components/GuessGrid'
 import EraSkinProvider from '../components/EraSkinProvider'
+import HowToPlay from '../components/HowToPlay'
 import { fetchDuelForGuesser, submitGuess } from '../lib/duelsApi'
 import { getEraByBand } from '../lib/wordbank'
 import { track } from '../lib/plausible'
@@ -49,6 +50,7 @@ export default function Guess({ slug, onFinished }) {
 
   return (
     <EraSkinProvider eraId={era?.id}>
+      <HowToPlay />
       <h1>Word duel</h1>
       <HintBanner eraName={era?.name} hint={duel.hint} />
 

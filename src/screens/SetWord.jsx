@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import EraPicker from '../components/EraPicker'
 import EraSkinProvider from '../components/EraSkinProvider'
+import HowToPlay from '../components/HowToPlay'
 import { getEraById, getWordsForEra, getRandomEra, getRandomWord } from '../lib/wordbank'
 import { createDuel } from '../lib/duelsApi'
 
@@ -51,6 +52,7 @@ export default function SetWord({ onCreated, threadId, turnBack }) {
 
   return (
     <EraSkinProvider eraId={era?.id}>
+      <HowToPlay />
       <form onSubmit={handleSubmit}>
         <h1>{turnBack ? 'Set your word back' : 'Set a word'}</h1>
 

@@ -4,6 +4,7 @@ import EraSkinProvider from '../components/EraSkinProvider'
 import HowToPlay from '../components/HowToPlay'
 import { getEraById, getWordsForEra, getRandomEra, getRandomWord } from '../lib/wordbank'
 import { createDuel } from '../lib/duelsApi'
+import { track } from '../lib/plausible'
 
 export default function SetWord({ onCreated, threadId, turnBack }) {
   const [eraId, setEraId] = useState(null)
@@ -21,6 +22,13 @@ export default function SetWord({ onCreated, threadId, turnBack }) {
     const random = getRandomEra()
     setEraId(random.id)
     setWord(getRandomWord(random.id))
+    track('Era Selected', { era: random.name, method: 'random' })
+  }
+
+  function selectEra(id) {
+    setEraId(id)
+    setWord(null)
+    track('Era Selected', { era: getEraById(id).name, method: 'browse' })
   }
 
   async function handleSubmit(e) {
@@ -58,7 +66,7 @@ export default function SetWord({ onCreated, threadId, turnBack }) {
 
       {!era && (
         <>
-          <EraPicker selectedEraId={eraId} onSelect={(id) => { setEraId(id); setWord(null) }} />
+          <EraPicker selectedEraId={eraId} onSelect={selectEra} />
           <button type="button" className="button-secondary" onClick={pickRandomEra}>
             🎲 Random era
           </button>

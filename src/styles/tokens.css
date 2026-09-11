@@ -221,7 +221,6 @@ input[type="text"] {
 
 .word-list__option {
   position: relative;
-  overflow: hidden;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -240,6 +239,7 @@ input[type="text"] {
   top: 0;
   bottom: 0;
   width: 5px;
+  border-radius: 8px 0 0 8px;
   /* background (not border-color) so this still works for the
      Brainrot & Beyond gradient accent, not just solid colors */
   background: var(--accent);

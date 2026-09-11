@@ -1,0 +1,32 @@
+/* Each era band gets one accent moment (see claude.md "Visual direction").
+   Applied via [data-era="..."] on the app shell — the neutral paper/ink base
+   never changes, only --accent / --accent-contrast. */
+
+[data-era="dial-up-days"] {
+  --accent: #3f6f70;
+  --accent-contrast: #EDE9E2;
+}
+
+[data-era="myspace-sprawl"] {
+  --accent: #ff2d95;
+  --accent-contrast: #0a0a0a;
+}
+
+[data-era="tumblr-dreams"] {
+  --accent: #9b8ec4;
+  --accent-contrast: #211B22;
+}
+
+[data-era="flex-lockdown"] {
+  --accent: #b6ff3c;
+  --accent-contrast: #211B22;
+}
+
+[data-era="brainrot-beyond"] {
+  --accent: linear-gradient(135deg, #ff5f6d, #ffc371, #47cf73, #3f8cff, #b04cff);
+  --accent-contrast: #ffffff;
+}
+
+[data-era="brainrot-beyond"] .button-primary {
+  background: var(--accent);
+}

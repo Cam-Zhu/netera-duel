@@ -1,0 +1,222 @@
+:root {
+  --paper: #EDE9E2;
+  --ink: #211B22;
+  --accent: #6b6b6b; /* neutral fallback until an era skin is applied */
+  --accent-contrast: #EDE9E2;
+
+  --green: #4c9a5a;
+  --yellow: #c9a227;
+  --grey: #7a7570;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.app-shell {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100%;
+  padding: 24px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.button-primary {
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border: none;
+  border-radius: 10px;
+  padding: 12px 20px;
+  font-weight: 600;
+}
+
+.button-secondary {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 10px;
+  padding: 12px 20px;
+}
+
+.tile {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border: 2px solid #c9c3b8;
+  border-radius: 6px;
+  color: var(--ink);
+}
+
+.tile-empty {
+  background: transparent;
+}
+
+.tile-typed {
+  background: transparent;
+  border-color: var(--ink);
+}
+
+.tile-green {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.tile-yellow {
+  background: var(--yellow);
+  border-color: var(--yellow);
+  color: #fff;
+}
+
+.tile-grey {
+  background: var(--grey);
+  border-color: var(--grey);
+  color: #fff;
+}
+
+.guess-row {
+  display: flex;
+  gap: 6px;
+}
+
+.guess-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.era-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.era-picker__option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: transparent;
+  border: 2px solid #c9c3b8;
+  border-radius: 10px;
+  padding: 12px 16px;
+  text-align: left;
+  color: var(--ink);
+}
+
+.era-picker__option--selected {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.hint-banner {
+  border-left: 4px solid var(--accent);
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hint-banner__era {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.hint-banner__hint {
+  font-style: italic;
+}
+
+.share-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.share-card__url {
+  background: #fff;
+  border: 1px solid #c9c3b8;
+  border-radius: 8px;
+  padding: 10px 12px;
+  word-break: break-all;
+  font-family: monospace;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+}
+
+label input[type="text"],
+label input:not([type]),
+input[type="text"] {
+  border: 1px solid #c9c3b8;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.checkbox-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+
+.word-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.word-list__option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #c9c3b8;
+  border-radius: 8px;
+  padding: 10px 14px;
+  text-align: left;
+  gap: 12px;
+}
+
+.word-list__option span {
+  font-size: 12px;
+  color: #55504a;
+  text-align: right;
+}
+
+.error-text {
+  color: #a02020;
+}

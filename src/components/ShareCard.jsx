@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { track } from '../lib/plausible'
 
 export default function ShareCard({ slug }) {
   const [copied, setCopied] = useState(false)
@@ -6,6 +7,7 @@ export default function ShareCard({ slug }) {
 
   async function copyLink() {
     await navigator.clipboard.writeText(url)
+    track('Share Link', { method: 'copy' })
     setCopied(true)
     setTimeout(() => setCopied(false), 1500)
   }
@@ -20,7 +22,10 @@ export default function ShareCard({ slug }) {
         <button
           type="button"
           className="button-secondary"
-          onClick={() => navigator.share({ title: 'Netera Duel', text: "You've been challenged to a word duel", url })}
+          onClick={() => {
+            track('Share Link', { method: 'native_share' })
+            navigator.share({ title: 'Netera Duel', text: "You've been challenged to a word duel", url })
+          }}
         >
           Share
         </button>

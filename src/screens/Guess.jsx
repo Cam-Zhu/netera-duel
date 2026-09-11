@@ -4,6 +4,7 @@ import GuessGrid from '../components/GuessGrid'
 import EraSkinProvider from '../components/EraSkinProvider'
 import { fetchDuelForGuesser, submitGuess } from '../lib/duelsApi'
 import { getEraByBand } from '../lib/wordbank'
+import { track } from '../lib/plausible'
 
 export default function Guess({ slug, onFinished }) {
   const [duel, setDuel] = useState(null)
@@ -82,7 +83,10 @@ export default function Guess({ slug, onFinished }) {
           </p>
           <button
             className="button-primary"
-            onClick={() => onFinished(slug, duel.status, duel.thread_id)}
+            onClick={() => {
+              track('Turn-Back Started')
+              onFinished(slug, duel.status, duel.thread_id)
+            }}
           >
             Set your word back
           </button>

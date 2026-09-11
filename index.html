@@ -13,6 +13,13 @@
     <meta property="og:type" content="website" />
 
     <title>Netera Duel</title>
+
+    <!-- Plausible: default script auto-tracks pageviews on pushState navigation
+         (our router uses history.pushState, see src/App.jsx), so SPA route
+         changes are picked up with no extra wiring. The queue shim lets
+         plausible() calls in our code work even before the script loads. -->
+    <script defer data-domain="neteraduel.com" src="https://plausible.io/js/script.js"></script>
+    <script>window.plausible = window.plausible || function () { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
   </head>
   <body>
     <div id="root"></div>

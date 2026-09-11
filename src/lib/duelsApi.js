@@ -1,5 +1,6 @@
 import { supabase } from './supabaseClient'
 import { getCreatorId, rememberOwnDuel } from './localIdentity'
+import { track } from './plausible'
 
 // Thin wrappers around the RPC functions defined in
 // supabase/migrations/0001_init.sql. The client never reads/writes the
@@ -26,6 +27,7 @@ export async function createDuel({ eraBand, secretWord, hint, hideEraBand, sette
 
   const { slug, setter_token: setterToken } = data[0]
   rememberOwnDuel(slug, setterToken)
+  track('Duel Created', { era_band: eraBand, turn_back: threadId ? 'yes' : 'no' })
   return { slug, setterToken }
 }
 
@@ -54,5 +56,9 @@ export async function submitGuess(slug, guess) {
     if (error.message?.includes('duel_already_finished')) throw new Error('ALREADY_FINISHED')
     throw error
   }
-  return data[0]
+  const result = data[0]
+  if (result.status !== 'pending') {
+    track('Duel Finished', { result: result.status, guess_count: result.guess_count })
+  }
+  return result
 }

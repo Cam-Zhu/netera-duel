@@ -27,13 +27,14 @@ export default function HowToPlay() {
             </button>
             <h2>How to play</h2>
             <ol>
-              <li>Pick a word from an internet era, browse the list, or tap "🎲 Random era" if you're in a hurry.</li>
-              <li>Add an optional hint, then get a shareable link. No account needed.</li>
-              <li>Send the link to a friend. They see the era and hint, then guess your word Wordle-style: 6 tries, with green/yellow/grey letter feedback.</li>
-              <li>Right after they finish, they set their own word back at you, that's what keeps a duel going.</li>
-              <li>Track who's ahead: "You solved theirs in 3, they solved yours in 5."</li>
+              <li>Pick a word from an internet era, browse the list, or tap the "Random era" button.</li>
+              <li>Add an optional hint, you can be as creative or helpful as you like, then get a shareable link.</li>
+              <li>Send the link to a friend. They see the era and hint, then try to guess your word: Letters turn green if they are correct and in the right place. Yellow if in the word but not in the right place.</li>
+              <li>After they finish, they can set their own word for you to try, completing the duel.</li>
+              <li>The app will track who wins, e.g. "You solved theirs in 3, they solved yours in 5."</li>
             </ol>
-            <p>GL/HF</p>
+            <p>Works best in 1-to-1 chats for now, multiplayer coming soon.</p>
+            <p>GL HF</p>
           </div>
         </div>
       )}

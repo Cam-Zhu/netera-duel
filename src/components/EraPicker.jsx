@@ -13,7 +13,10 @@ export default function EraPicker({ selectedEraId, onSelect }) {
           className={`era-picker__option ${selectedEraId === era.id ? 'era-picker__option--selected' : ''}`}
           onClick={() => onSelect(era.id)}
         >
-          <strong>{era.name}</strong>
+          <span className="era-picker__option-label">
+            <span className="era-picker__swatch" aria-hidden="true" />
+            <strong>{era.name}</strong>
+          </span>
           <span>{era.range}</span>
         </button>
       ))}

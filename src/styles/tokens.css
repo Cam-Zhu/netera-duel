@@ -129,6 +129,20 @@ button {
   background: color-mix(in srgb, var(--accent) 15%, transparent);
 }
 
+.era-picker__option-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.era-picker__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
 .hint-banner {
   border-left: 4px solid var(--accent);
   padding: 8px 12px;

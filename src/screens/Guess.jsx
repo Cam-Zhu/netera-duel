@@ -52,7 +52,7 @@ export default function Guess({ slug, onFinished }) {
     <EraSkinProvider eraId={era?.id}>
       <HowToPlay />
       <h1>Word duel</h1>
-      <HintBanner eraName={era?.name} hint={duel.hint} />
+      <HintBanner eraName={era?.name} eraRange={era?.range} hint={duel.hint} />
 
       <GuessGrid
         wordLength={duel.word_length}

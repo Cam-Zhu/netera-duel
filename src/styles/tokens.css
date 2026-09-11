@@ -144,6 +144,12 @@ button {
   letter-spacing: 0.04em;
 }
 
+.hint-banner__era-range {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
 .hint-banner__hint {
   font-style: italic;
 }

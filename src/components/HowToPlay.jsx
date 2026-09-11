@@ -27,13 +27,13 @@ export default function HowToPlay() {
             </button>
             <h2>How to play</h2>
             <ol>
-              <li>Pick a word from an internet era — browse the list, or tap "🎲 Random era" if you're in a hurry.</li>
+              <li>Pick a word from an internet era, browse the list, or tap "🎲 Random era" if you're in a hurry.</li>
               <li>Add an optional hint, then get a shareable link. No account needed.</li>
               <li>Send the link to a friend. They see the era and hint, then guess your word Wordle-style: 6 tries, with green/yellow/grey letter feedback.</li>
-              <li>Right after they finish, they set their own word back at you — that's what keeps a duel going.</li>
+              <li>Right after they finish, they set their own word back at you, that's what keeps a duel going.</li>
               <li>Track who's ahead: "You solved theirs in 3, they solved yours in 5."</li>
             </ol>
-            <p>Words come from a curated per-era slang bank, not a dictionary — so slang like "rizz" or "delulu" is fair game.</p>
+            <p>GL/HF</p>
           </div>
         </div>
       )}

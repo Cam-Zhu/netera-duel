@@ -26,7 +26,7 @@ export default function Guess({ slug, onFinished }) {
   async function handleSubmit(e) {
     e.preventDefault()
     if (input.length !== duel.word_length) {
-      setError(`Word is ${duel.word_length} letters long.`)
+      setError(`Word is ${duel.word_length} characters long.`)
       return
     }
     setSubmitting(true)
@@ -66,7 +66,7 @@ export default function Guess({ slug, onFinished }) {
             type="text"
             value={input}
             maxLength={duel.word_length}
-            onChange={(e) => setInput(e.target.value.replace(/[^a-zA-Z]/g, ''))}
+            onChange={(e) => setInput(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''))}
             autoFocus
             autoCapitalize="characters"
           />

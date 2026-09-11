@@ -220,15 +220,29 @@ input[type="text"] {
 }
 
 .word-list__option {
+  position: relative;
+  overflow: hidden;
   display: flex;
   justify-content: space-between;
   align-items: center;
   background: #fff;
   border: 1px solid #c9c3b8;
   border-radius: 8px;
-  padding: 10px 14px;
+  padding: 10px 14px 10px 20px;
   text-align: left;
   gap: 12px;
+}
+
+.word-list__option::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  /* background (not border-color) so this still works for the
+     Brainrot & Beyond gradient accent, not just solid colors */
+  background: var(--accent);
 }
 
 .word-list__option span {

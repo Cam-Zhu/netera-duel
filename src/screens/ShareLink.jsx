@@ -34,6 +34,16 @@ export default function ShareLink({ slug }) {
       <p>
         You set <strong>{duel.secret_word.toUpperCase()}</strong> from {era?.name}.
       </p>
+      {duel.hint && (
+        <p>
+          Hint: <strong>{duel.hint}</strong>
+        </p>
+      )}
+      {duel.setter_name && (
+        <p>
+          From: <strong>{duel.setter_name}</strong>
+        </p>
+      )}
 
       {duel.status === 'pending' && (
         <>

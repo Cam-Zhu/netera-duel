@@ -102,7 +102,7 @@ export default function SoloPlay({ onExit }) {
                 className="button-secondary"
                 onClick={() => {
                   track('Solo Game Given Up', { era: era.name, guess_count: guesses.length })
-                  onExit()
+                  setStatus('gave_up')
                 }}
               >
                 I give up
@@ -115,6 +115,7 @@ export default function SoloPlay({ onExit }) {
               <p>
                 {status === 'won' && `Solved it in ${guesses.length}!`}
                 {status === 'lost' && `Out of guesses — the word was "${word.word}".`}
+                {status === 'gave_up' && `The word was "${word.word}".`}
               </p>
               <button type="button" className="button-primary" onClick={() => startEra(era.id, 'replay')}>
                 Play again

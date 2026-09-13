@@ -97,6 +97,16 @@ export default function SoloPlay({ onExit }) {
               <button type="submit" className="button-primary">
                 Guess
               </button>
+              <button
+                type="button"
+                className="button-secondary"
+                onClick={() => {
+                  track('Solo Game Given Up', { era: era.name, guess_count: guesses.length })
+                  onExit()
+                }}
+              >
+                I give up
+              </button>
             </form>
           )}
 

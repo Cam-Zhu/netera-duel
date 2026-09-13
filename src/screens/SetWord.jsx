@@ -14,9 +14,11 @@ export default function SetWord({ onCreated, threadId, turnBack, onPlaySolo }) {
   const [setterName, setSetterName] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
+  const [search, setSearch] = useState('')
 
   const era = eraId ? getEraById(eraId) : null
   const words = era ? getWordsForEra(era.id) : []
+  const visibleWords = words.filter((w) => w.word.toLowerCase().includes(search.trim().toLowerCase()))
 
   function pickRandomEra() {
     const random = getRandomEra()
@@ -28,6 +30,7 @@ export default function SetWord({ onCreated, threadId, turnBack, onPlaySolo }) {
   function selectEra(id) {
     setEraId(id)
     setWord(null)
+    setSearch('')
     track('Era Selected', { era: getEraById(id).name, method: 'browse' })
   }
 
@@ -81,8 +84,15 @@ export default function SetWord({ onCreated, threadId, turnBack, onPlaySolo }) {
       {era && !word && (
         <>
           <h2>{era.name}</h2>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search words…"
+            aria-label="Search words"
+          />
           <div className="word-list">
-            {words.map((w) => (
+            {visibleWords.map((w) => (
               <button
                 type="button"
                 key={w.word}
@@ -93,11 +103,12 @@ export default function SetWord({ onCreated, threadId, turnBack, onPlaySolo }) {
                 <span>{w.meaning}</span>
               </button>
             ))}
+            {visibleWords.length === 0 && <p>No words match "{search}".</p>}
           </div>
           <button type="button" className="button-secondary" onClick={() => setWord(getRandomWord(era.id))}>
             🎲 Random word from this era
           </button>
-          <button type="button" className="button-secondary" onClick={() => setEraId(null)}>
+          <button type="button" className="button-secondary" onClick={() => { setEraId(null); setSearch('') }}>
             ← Change era
           </button>
         </>

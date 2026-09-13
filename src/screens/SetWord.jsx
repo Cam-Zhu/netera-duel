@@ -88,7 +88,7 @@ export default function SetWord({ onCreated, threadId, turnBack, onPlaySolo }) {
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search words…"
+            placeholder="Search this era or browse below"
             aria-label="Search words"
           />
           <div className="word-list">

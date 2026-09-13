@@ -62,7 +62,7 @@ export default function SoloPlay({ onExit }) {
 
       {!era && (
         <>
-          <p>Pick an era to guess a word from — no friend required.</p>
+          <p>Pick an era to guess a word from.</p>
           <EraPicker selectedEraId={eraId} onSelect={(id) => startEra(id, 'browse')} />
           <button type="button" className="button-secondary" onClick={() => startEra(getRandomEra().id, 'random')}>
             🎲 Random era

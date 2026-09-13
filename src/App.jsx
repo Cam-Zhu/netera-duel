@@ -2,7 +2,9 @@ import { useEffect, useState } from 'react'
 import SetWord from './screens/SetWord'
 import Guess from './screens/Guess'
 import ShareLink from './screens/ShareLink'
+import SoloPlay from './screens/SoloPlay'
 import { isOwnDuel } from './lib/localIdentity'
+import { track } from './lib/plausible'
 
 // No router dependency — the app only ever has two shapes of URL, so a tiny
 // pathname parser plus the History API covers it.
@@ -18,6 +20,7 @@ function navigate(path) {
 
 export default function App() {
   const [pathname, setPathname] = useState(window.location.pathname)
+  const [solo, setSolo] = useState(false)
 
   useEffect(() => {
     const onPopState = () => setPathname(window.location.pathname)
@@ -28,7 +31,16 @@ export default function App() {
   const route = parseRoute(pathname)
 
   if (route.name === 'home') {
-    return <SetWord onCreated={(slug) => navigate(`/d/${slug}`)} />
+    if (solo) return <SoloPlay onExit={() => setSolo(false)} />
+    return (
+      <SetWord
+        onCreated={(slug) => navigate(`/d/${slug}`)}
+        onPlaySolo={() => {
+          track('Solo Mode Opened')
+          setSolo(true)
+        }}
+      />
+    )
   }
 
   // key={slug} so switching between two duel links (e.g. via browser history)

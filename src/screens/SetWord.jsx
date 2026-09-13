@@ -6,7 +6,7 @@ import { getEraById, getWordsForEra, getRandomEra, getRandomWord } from '../lib/
 import { createDuel } from '../lib/duelsApi'
 import { track } from '../lib/plausible'
 
-export default function SetWord({ onCreated, threadId, turnBack }) {
+export default function SetWord({ onCreated, threadId, turnBack, onPlaySolo }) {
   const [eraId, setEraId] = useState(null)
   const [word, setWord] = useState(null)
   const [hint, setHint] = useState('')
@@ -70,6 +70,11 @@ export default function SetWord({ onCreated, threadId, turnBack }) {
           <button type="button" className="button-secondary" onClick={pickRandomEra}>
             🎲 Random era
           </button>
+          {onPlaySolo && !turnBack && (
+            <button type="button" className="button-secondary" onClick={onPlaySolo}>
+              I'm just playing alone
+            </button>
+          )}
         </>
       )}
 

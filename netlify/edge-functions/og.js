@@ -1,0 +1,208 @@
+// Per-duel Open Graph tags for /d/<slug>.
+//
+// Link-unfurling crawlers (iMessage, WhatsApp, Slack, Facebook, Discord) fetch
+// the HTML and never run JS, so the React app can't set these — index.html ships
+// a static site-wide card and this function rewrites it per duel on the way out.
+//
+// Declared for /d/* in netlify.toml. Edge functions run ahead of the SPA
+// redirect, so context.next() returns the same index.html a browser would get.
+//
+// Design rule throughout: a preview card is decoration. Anything that goes
+// wrong here — slug not found, Supabase slow or down, missing image, an
+// outright exception — falls back to the unmodified static HTML rather than
+// erroring, because a plain branded card still works and a 500 means the
+// crawler shows a bare URL (or worse, the guesser's browser gets nothing).
+
+// Era id/name/range triples, duplicated from src/data/wordbank.json. Edge
+// functions run in Deno outside the Vite bundle, so they can't import it —
+// if the era names there ever change, change them here too.
+const ERAS = [
+  { band: 1, id: 'dial-up-days', name: 'Dial-Up Days', range: '2001-2005' },
+  { band: 2, id: 'myspace-sprawl', name: 'The MySpace Sprawl', range: '2006-2010' },
+  { band: 3, id: 'tumblr-dreams', name: 'Tumblr Dreams', range: '2011-2015' },
+  { band: 4, id: 'flex-lockdown', name: 'The Flex & Lockdown Years', range: '2016-2020' },
+  { band: 5, id: 'brainrot-beyond', name: 'Brainrot & Beyond', range: '2021-present' },
+]
+
+// The per-era art and the site-wide fallback are deliberately different shapes:
+// the era cards are 1200x630 (the 1.91:1 ratio Facebook/LinkedIn document and
+// every scraper crops toward), while og-image.png predates them at 1536x1024.
+// index.html can only declare one pair of dimensions, so whichever image we
+// pick, its dimensions get written alongside it — a card whose declared size
+// doesn't match the file gets letterboxed or cropped by the scraper.
+const ERA_IMAGE = { ext: 'jpg', width: '1200', height: '630' }
+const FALLBACK_IMAGE = { path: '/og-image.png', width: '1536', height: '1024' }
+
+const GENERIC_TITLE = "You've been challenged to a word duel"
+const GENERIC_DESCRIPTION = 'Six guesses at one word. Can you get it?'
+
+const MAX_NAME_LENGTH = 30
+const RPC_TIMEOUT_MS = 2000
+
+// setter_name is free text somebody typed into a form and it lands inside an
+// HTML attribute. React escapes nothing for us out here — this is raw string
+// concatenation into a document — so escape it by hand. Escaping the quotes
+// matters most: an unescaped " would close the content attribute and let the
+// rest of the name become markup.
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+// Truncate before escaping, so the cap can't slice an entity in half.
+function cleanName(raw) {
+  if (typeof raw !== 'string') return null
+  const trimmed = raw.trim().slice(0, MAX_NAME_LENGTH).trim()
+  return trimmed ? escapeHtml(trimmed) : null
+}
+
+// Rewrite the content="" of whichever <meta> carries the given key. Matching the
+// whole tag first, then the content attribute inside it, keeps this working
+// regardless of attribute order — a build step that reshuffles them shouldn't
+// silently turn this into a no-op.
+function setMeta(html, attrName, key, value) {
+  const tag = new RegExp(`<meta\\b[^>]*\\b${attrName}=["']${key}["'][^>]*>`, 'i')
+  return html.replace(tag, (match) =>
+    match.replace(/(\bcontent\s*=\s*")[^"]*(")/i, `$1${value}$2`)
+  )
+}
+
+function setTitle(html, value) {
+  return html.replace(/<title>[^<]*<\/title>/i, `<title>${value}</title>`)
+}
+
+// A missing /og/era-N.jpg does NOT 404 here: the SPA catch-all redirect in
+// netlify.toml would serve index.html at status 200 instead, and handing a
+// crawler an HTML document as its og:image produces a visibly broken card. So
+// check the content type, not just res.ok. Memoised per isolate — the answer
+// only changes on deploy, and deploys start fresh isolates.
+const imageChecks = new Map()
+
+function imageIsReal(url) {
+  if (!imageChecks.has(url)) {
+    imageChecks.set(
+      url,
+      (async () => {
+        try {
+          const res = await fetch(url, {
+            method: 'HEAD',
+            signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
+          })
+          const type = res.headers.get('content-type') || ''
+          return res.ok && type.startsWith('image/')
+        } catch {
+          return false
+        }
+      })()
+    )
+  }
+  return imageChecks.get(url)
+}
+
+async function pickImage(origin, era, hideEraBand) {
+  // No era art when the band is hidden — the image would give away the one
+  // thing the setter chose to withhold.
+  if (era && !hideEraBand) {
+    const url = `${origin}/og/era-${era.band}.${ERA_IMAGE.ext}`
+    if (await imageIsReal(url)) {
+      return { url, width: ERA_IMAGE.width, height: ERA_IMAGE.height }
+    }
+  }
+  return {
+    url: `${origin}${FALLBACK_IMAGE.path}`,
+    width: FALLBACK_IMAGE.width,
+    height: FALLBACK_IMAGE.height,
+  }
+}
+
+async function fetchDuelOg(slug) {
+  const base = Netlify.env.get('SUPABASE_URL')
+  const key = Netlify.env.get('SUPABASE_ANON_KEY')
+  if (!base || !key) return null
+
+  const res = await fetch(`${base.replace(/\/$/, '')}/rest/v1/rpc/get_duel_og`, {
+    method: 'POST',
+    headers: {
+      apikey: key,
+      authorization: `Bearer ${key}`,
+      'content-type': 'application/json',
+      accept: 'application/json',
+    },
+    body: JSON.stringify({ p_slug: slug }),
+    signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
+  })
+
+  if (!res.ok) return null
+  const rows = await res.json()
+  return Array.isArray(rows) && rows.length ? rows[0] : null
+}
+
+export default async (request, context) => {
+  const res = await context.next()
+
+  // Anything that isn't the HTML shell (an asset, a redirect) passes straight
+  // through untouched, body unread.
+  if (!(res.headers.get('content-type') || '').includes('text/html')) return res
+
+  let html
+  try {
+    html = await res.text()
+  } catch {
+    return res
+  }
+
+  // Past this point the body is consumed, so every exit rebuilds a Response
+  // from `html` — worst case that's the byte-identical static page.
+  try {
+    const url = new URL(request.url)
+    const slug = decodeURIComponent(url.pathname.match(/^\/d\/([^/]+)\/?$/)?.[1] ?? '')
+
+    // Slugs are 8 lowercase alphanumerics from generate_slug(); the loose guard
+    // leaves room for that to change while still rejecting junk paths outright
+    // rather than spending a Supabase round trip on them.
+    if (/^[A-Za-z0-9_-]{1,64}$/.test(slug)) {
+      const duel = await fetchDuelOg(slug)
+
+      // A finished duel (won/lost/expired) keeps the generic card: there's
+      // nothing left to challenge anyone to, and re-shares of an old link
+      // shouldn't read as a fresh invitation.
+      if (duel && duel.status === 'pending') {
+        const era = ERAS.find((e) => e.band === duel.era_band) ?? null
+        const showEra = Boolean(era) && !duel.hide_era_band
+        const name = cleanName(duel.setter_name)
+
+        const title = name ? `${name}'s challenged you to a word duel` : GENERIC_TITLE
+        const description = showEra
+          ? `${era.name} (${era.range}). Six guesses. Can you get it?`
+          : GENERIC_DESCRIPTION
+        const image = await pickImage(url.origin, era, duel.hide_era_band)
+
+        html = setTitle(html, title)
+        html = setMeta(html, 'property', 'og:title', title)
+        html = setMeta(html, 'property', 'og:description', description)
+        html = setMeta(html, 'property', 'og:image', image.url)
+        html = setMeta(html, 'property', 'og:image:width', image.width)
+        html = setMeta(html, 'property', 'og:image:height', image.height)
+        html = setMeta(html, 'property', 'og:url', `${url.origin}/d/${slug}`)
+        html = setMeta(html, 'name', 'twitter:title', title)
+        html = setMeta(html, 'name', 'twitter:description', description)
+        html = setMeta(html, 'name', 'twitter:image', image.url)
+      }
+    }
+  } catch {
+    // Fall through with whatever `html` holds — the untouched static page.
+  }
+
+  // Rebuild the headers rather than reusing the originals wholesale: the body
+  // length has changed, and a stale content-length or content-encoding would
+  // truncate or garble the response.
+  const headers = new Headers(res.headers)
+  headers.delete('content-length')
+  headers.delete('content-encoding')
+
+  return new Response(html, { status: res.status, statusText: res.statusText, headers })
+}

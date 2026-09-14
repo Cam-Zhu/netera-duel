@@ -10,12 +10,18 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-    <!-- Open Graph — static site-wide default. Note: link-unfurling crawlers
-         (iMessage, Slack, etc.) fetch this HTML without running JS, so a truly
-         per-duel preview (custom title naming the setter, etc.) would need a
-         Netlify Edge Function rendering these tags server-side per slug —
-         not yet built. This default at least gives every duel link a proper
-         branded card instead of a bare URL. -->
+    <!-- Open Graph — static site-wide default, and the fallback for every path
+         that isn't a duel. Link-unfurling crawlers fetch this HTML without
+         running JS, so /d/<slug> links get their per-duel card (setter's name,
+         era band, era artwork) from netlify/edge-functions/og.js, which
+         string-replaces the og:*, twitter:* and <title> tags below on the way
+         out. Keep the attribute shape — property/name first, then content in
+         double quotes — or those replacements silently no-op and every duel
+         falls back to this generic card.
+
+         og:image:width/height below describe og-image.png specifically. The
+         edge function rewrites them alongside og:image, because the per-era
+         images in public/og/ are 1200x630 and this one isn't. -->
     <meta property="og:title" content="Netera Duel" />
     <meta property="og:description" content="A friend has challenged you to a word duel." />
     <meta property="og:type" content="website" />

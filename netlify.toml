@@ -2,6 +2,14 @@
   command = "npm run build"
   publish = "dist"
 
+# Rewrites the static OG tags in index.html per duel. Runs before the SPA
+# redirect below, so context.next() inside it still resolves to index.html.
+# Needs the runtime env vars SUPABASE_URL / SUPABASE_ANON_KEY (see .env.example)
+# — the build-time VITE_ ones aren't visible to edge functions.
+[[edge_functions]]
+  path = "/d/*"
+  function = "og"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

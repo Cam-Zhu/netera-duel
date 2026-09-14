@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import EraPicker from '../components/EraPicker'
+import EraBanner from '../components/EraBanner'
 import EraSkinProvider from '../components/EraSkinProvider'
 import HowToPlay from '../components/HowToPlay'
 import { getEraById, getWordsForEra, getRandomEra, getRandomWord } from '../lib/wordbank'
@@ -84,6 +85,7 @@ export default function SetWord({ onCreated, threadId, turnBack, onPlaySolo }) {
       {era && !word && (
         <>
           <h2>{era.name}</h2>
+          <EraBanner era={era} />
           <input
             type="text"
             value={search}

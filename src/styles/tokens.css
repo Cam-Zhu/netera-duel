@@ -149,6 +149,16 @@ button {
   flex-shrink: 0;
 }
 
+/* 3:1 era artwork on the word-picker screen. width/height are also set as
+   attributes on the <img> so the browser reserves the right box before the
+   file loads — without that the word list below it jumps down on arrival. */
+.era-banner {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
 .hint-banner {
   border-left: 4px solid var(--accent);
   padding: 8px 12px;

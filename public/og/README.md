@@ -1,4 +1,23 @@
-# Per-era Open Graph images
+# Per-era images
+
+Two separate sets live here, both keyed by era band (the smallint 1–5):
+
+| Files | Size | Used by | Seen by |
+|---|---|---|---|
+| `era-1..5.jpg` | 1200 × 630 | `netlify/edge-functions/og.js` | link-unfurling crawlers |
+| `banner-1..5.jpg` | 1200 × 400 | `src/components/EraBanner.jsx` | players, on the word-picker screen |
+
+They are **not interchangeable**. The share cards carry the NET/ERA DUEL
+wordmark in a clear centre field, which is right for a card competing in a chat
+thread and wrong inside the app, where it repeats branding the player is already
+looking at. The banners are wordmark-free and composed edge to edge, which is
+right above a word list and wrong as a share card. Swapping one for the other
+will look broken in both directions.
+
+Only the `era-` set is referenced by the edge function, which builds the path as
+`era-<band>.jpg` — so `banner-*.jpg` can never be picked up as an OG image.
+
+## Open Graph share cards (`era-N.jpg`)
 
 Drop five files in this folder:
 
@@ -48,3 +67,16 @@ and falls back if the response isn't really an image. So partial coverage is
 fine: add two of the five and only those two bands get custom art. The fallback
 is also used whenever the setter chose to hide the era band, since the artwork
 would give away exactly what they hid.
+
+## In-app era banners (`banner-N.jpg`)
+
+1200 × 400 (3:1), under 100 KB each, rendered ~129 px tall in a ~390 px column.
+No wordmark and no text of any kind — the era's name is live HTML directly
+above the image, so anything lettered here duplicates it.
+
+`ERA-BANNER-BRIEF.md` in the repo root is the full art brief these were made
+from; reuse it if the set ever needs extending or redoing.
+
+`npm run compress:og` only touches `era-N.jpg`. The banners arrived already
+within budget, so nothing re-encodes them — if a replacement comes in heavy,
+compress it before committing rather than adding a second pass here.

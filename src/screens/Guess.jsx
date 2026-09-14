@@ -67,7 +67,6 @@ export default function Guess({ slug, onFinished }) {
             value={input}
             maxLength={duel.word_length}
             onChange={(e) => setInput(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''))}
-            autoFocus
             autoCapitalize="characters"
           />
           {error && <p className="error-text">{error}</p>}

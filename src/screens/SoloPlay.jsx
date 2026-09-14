@@ -90,7 +90,6 @@ export default function SoloPlay({ onExit }) {
                 value={input}
                 maxLength={word.word.length}
                 onChange={(e) => setInput(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''))}
-                autoFocus
                 autoCapitalize="characters"
               />
               {error && <p className="error-text">{error}</p>}

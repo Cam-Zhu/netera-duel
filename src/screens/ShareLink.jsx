@@ -7,7 +7,7 @@ import { getEraByBand } from '../lib/wordbank'
 
 // The setter's own view of a duel they created — reachable only because their
 // browser remembers the setter_token locally, never from the shared link.
-export default function ShareLink({ slug }) {
+export default function ShareLink({ slug, onHome }) {
   const [duel, setDuel] = useState(null)
   const [thread, setThread] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -23,8 +23,18 @@ export default function ShareLink({ slug }) {
     })
   }, [slug])
 
+  // The "not found" branch is the one place someone can get properly stranded —
+  // their own duel link, but no setter_token in this browser and so nothing to
+  // show and no link to leave by. It gets the same way out as the duel itself.
   if (loading) return <p>Loading…</p>
-  if (!duel) return <p>Couldn't find that duel.</p>
+  if (!duel) {
+    return (
+      <>
+        <p>Couldn't find that duel.</p>
+        <BackHome onHome={onHome} />
+      </>
+    )
+  }
 
   const era = getEraByBand(duel.era_band)
 
@@ -72,6 +82,19 @@ export default function ShareLink({ slug }) {
           </ul>
         </div>
       )}
+
+      <BackHome onHome={onHome} />
     </EraSkinProvider>
+  )
+}
+
+// Same label, arrow and class as SoloPlay's exit, so leaving a screen looks the
+// same wherever you do it.
+function BackHome({ onHome }) {
+  if (!onHome) return null
+  return (
+    <button type="button" className="button-secondary" onClick={onHome}>
+      ← Back home
+    </button>
   )
 }

@@ -54,7 +54,7 @@ function DuelRoute({ slug }) {
   const [turnBack, setTurnBack] = useState(null)
 
   if (isOwnDuel(slug)) {
-    return <ShareLink slug={slug} />
+    return <ShareLink slug={slug} onHome={() => navigate('/')} />
   }
 
   if (turnBack) {

@@ -50,7 +50,7 @@ export default function App() {
 
 function DuelRoute({ slug }) {
   // Set once the guesser finishes their own duel — swaps the screen from
-  // "play" into "set your word back", per claude.md's core loop step 4.
+  // "play" into "pick another word", per claude.md's core loop step 4.
   const [turnBack, setTurnBack] = useState(null)
 
   if (isOwnDuel(slug)) {

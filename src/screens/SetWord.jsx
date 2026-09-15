@@ -66,7 +66,7 @@ export default function SetWord({ onCreated, threadId, turnBack, onPlaySolo }) {
     <EraSkinProvider eraId={era?.id}>
       <HowToPlay />
       <form onSubmit={handleSubmit}>
-        <h1>{turnBack ? 'Set your word back' : 'Set a word'}</h1>
+        <h1>{turnBack ? 'Pick another word' : 'Set a word'}</h1>
 
       {!era && (
         <>

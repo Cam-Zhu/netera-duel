@@ -89,7 +89,7 @@ export default function Guess({ slug, onFinished }) {
               onFinished(slug, duel.status, duel.thread_id)
             }}
           >
-            Set your word back
+            Pick another word
           </button>
         </>
       )}

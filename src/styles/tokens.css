@@ -39,6 +39,15 @@ button {
   gap: 20px;
 }
 
+/* Screens are flex columns, so margins don't collapse: an h2/p directly
+   under the h1 would stack its own top margin on top of the h1's bottom
+   margin *and* the container gap. Drop it so the spacing matches the
+   homepage, where the h1 is followed by the (margin-less) era picker. */
+h1 + h2,
+h1 + p {
+  margin-top: 0;
+}
+
 .button-primary {
   background: var(--accent);
   color: var(--accent-contrast);

@@ -61,7 +61,7 @@ export default function Guess({ slug, onFinished }) {
 
   return (
     <EraSkinProvider eraId={era?.id}>
-      <HowToPlay />
+      <HowToPlay variant="guesser" />
       <h1>Word duel</h1>
       <HintBanner eraName={era?.name} eraRange={era?.range} hint={duel.hint} />
 

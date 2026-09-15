@@ -4,6 +4,11 @@
 // the HTML and never run JS, so the React app can't set these — index.html ships
 // a static site-wide card and this function rewrites it per duel on the way out.
 //
+// It also does the three things a duel URL needs that the home page doesn't:
+// strips the prerendered home screen out of #root, marks the page noindex,
+// and returns 404 for a slug that doesn't exist (see stripPrerender,
+// addNoindex and fetchDuelOg below).
+//
 // Declared for /d/* in netlify.toml. Edge functions run ahead of the SPA
 // redirect, so context.next() returns the same index.html a browser would get.
 //
@@ -75,6 +80,30 @@ function setTitle(html, value) {
   return html.replace(/<title>[^<]*<\/title>/i, `<title>${value}</title>`)
 }
 
+// dist/index.html carries the home screen prerendered into #root (see
+// scripts/prerender.mjs) so search engines have text to index. On a duel URL
+// that's the wrong screen — a guesser would see "Set a word" for the instant
+// before React mounts — so hand them the empty shell instead. The lazy match
+// runs to the first </div> that's followed by the <noscript> (or </body>)
+// index.html puts after the root, which is the root's own closing tag
+// however deeply nested the prerender is. No-op if the root is already empty.
+function stripPrerender(html) {
+  return html.replace(
+    /<div id="root">[\s\S]*?<\/div>(?=\s*(?:<noscript>|<\/body>))/i,
+    '<div id="root"></div>'
+  )
+}
+
+// Every duel link is a thin near-copy of the home page, and there could be
+// thousands of them — none should be indexed, and none should surface
+// "<name>'s challenged you" in a search result. netlify.toml sends the same
+// signal as an X-Robots-Tag header; the meta tag is belt-and-braces for the
+// HTML body itself. Link unfurlers ignore robots directives, so the preview
+// card is unaffected.
+function addNoindex(html) {
+  return html.replace(/<\/head>/i, '    <meta name="robots" content="noindex" />\n  </head>')
+}
+
 // A missing /og/era-N.jpg does NOT 404 here: the SPA catch-all redirect in
 // netlify.toml would serve index.html at status 200 instead, and handing a
 // crawler an HTML document as its og:image produces a visibly broken card. So
@@ -119,10 +148,15 @@ async function pickImage(origin, era, hideEraBand) {
   }
 }
 
+// Three outcomes, and the caller treats them differently: the duel row; null
+// when Supabase answered and the slug definitely doesn't exist (the page
+// should 404 so search engines don't log a soft-404 for every dead link); or
+// undefined when we couldn't find out (no env, non-2xx), in which case the
+// page keeps its normal status. A timeout throws and is caught by the caller.
 async function fetchDuelOg(slug) {
   const base = Netlify.env.get('SUPABASE_URL')
   const key = Netlify.env.get('SUPABASE_ANON_KEY')
-  if (!base || !key) return null
+  if (!base || !key) return undefined
 
   const res = await fetch(`${base.replace(/\/$/, '')}/rest/v1/rpc/get_duel_og`, {
     method: 'POST',
@@ -136,9 +170,10 @@ async function fetchDuelOg(slug) {
     signal: AbortSignal.timeout(RPC_TIMEOUT_MS),
   })
 
-  if (!res.ok) return null
+  if (!res.ok) return undefined
   const rows = await res.json()
-  return Array.isArray(rows) && rows.length ? rows[0] : null
+  if (!Array.isArray(rows)) return undefined
+  return rows.length ? rows[0] : null
 }
 
 export default async (request, context) => {
@@ -156,7 +191,12 @@ export default async (request, context) => {
   }
 
   // Past this point the body is consumed, so every exit rebuilds a Response
-  // from `html` — worst case that's the byte-identical static page.
+  // from `html` — worst case that's the static page minus the home-screen
+  // prerender, which is the right shape for any duel URL regardless of what
+  // happens below.
+  html = addNoindex(stripPrerender(html))
+  let status = res.status
+
   try {
     const url = new URL(request.url)
     const slug = decodeURIComponent(url.pathname.match(/^\/d\/([^/]+)\/?$/)?.[1] ?? '')
@@ -166,6 +206,11 @@ export default async (request, context) => {
     // rather than spending a Supabase round trip on them.
     if (/^[A-Za-z0-9_-]{1,64}$/.test(slug)) {
       const duel = await fetchDuelOg(slug)
+
+      // Same HTML, honest status: the SPA still loads and shows its own
+      // not-found state, but crawlers stop treating dead links as duplicate
+      // pages that happen to return 200.
+      if (duel === null) status = 404
 
       // A finished duel (won/lost/expired) keeps the generic card: there's
       // nothing left to challenge anyone to, and re-shares of an old link
@@ -182,6 +227,7 @@ export default async (request, context) => {
         const image = await pickImage(url.origin, era, duel.hide_era_band)
 
         html = setTitle(html, title)
+        html = setMeta(html, 'name', 'description', description)
         html = setMeta(html, 'property', 'og:title', title)
         html = setMeta(html, 'property', 'og:description', description)
         html = setMeta(html, 'property', 'og:image', image.url)
@@ -204,5 +250,9 @@ export default async (request, context) => {
   headers.delete('content-length')
   headers.delete('content-encoding')
 
-  return new Response(html, { status: res.status, statusText: res.statusText, headers })
+  return new Response(html, {
+    status,
+    statusText: status === res.status ? res.statusText : 'Not Found',
+    headers,
+  })
 }

@@ -18,6 +18,11 @@ function navigate(path) {
   window.dispatchEvent(new PopStateEvent('popstate'))
 }
 
+// Must match the <title> in index.html — that's what a crawler sees before
+// JS runs, and what the tab shows on first paint, so the two shouldn't differ.
+const HOME_TITLE = 'NetEra Duel — word duels from 25 years of internet slang'
+const SOLO_TITLE = 'Solo play · NetEra Duel'
+
 export default function App() {
   const [pathname, setPathname] = useState(window.location.pathname)
   const [solo, setSolo] = useState(false)
@@ -29,6 +34,14 @@ export default function App() {
   }, [])
 
   const route = parseRoute(pathname)
+
+  // Only the home route owns the tab title. On /d/<slug> the edge function
+  // (netlify/edge-functions/og.js) has already written a personalised one —
+  // "Cam's challenged you to a word duel" — and overwriting it from here would
+  // throw that away.
+  useEffect(() => {
+    if (route.name === 'home') document.title = solo ? SOLO_TITLE : HOME_TITLE
+  }, [route.name, solo])
 
   if (route.name === 'home') {
     if (solo) return <SoloPlay onExit={() => setSolo(false)} />

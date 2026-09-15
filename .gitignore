@@ -5,3 +5,4 @@ dist
 .DS_Store
 .netlify
 deno.lock
+.prerender

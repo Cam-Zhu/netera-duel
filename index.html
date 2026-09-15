@@ -10,6 +10,14 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
+    <!-- Search engines. Google builds its snippet from name="description", not
+         og:description, and the canonical stops the *.netlify.app alias and
+         ?utm= variants being indexed as duplicates of the real domain. Duel
+         links (/d/*) are kept out of the index separately — see netlify.toml
+         and netlify/edge-functions/og.js. -->
+    <meta name="description" content="Friend-vs-friend word duels drawn from 25 years of internet slang. Pick a word from an era of the internet, send the link, and see who guesses faster. Free, no signup." />
+    <link rel="canonical" href="https://neteraduel.com/" />
+
     <!-- Open Graph — static site-wide default, and the fallback for every path
          that isn't a duel. Link-unfurling crawlers fetch this HTML without
          running JS, so /d/<slug> links get their per-duel card (setter's name,
@@ -25,6 +33,8 @@
     <meta property="og:title" content="Netera Duel" />
     <meta property="og:description" content="A friend has challenged you to a word duel." />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Netera Duel" />
+    <meta property="og:locale" content="en_GB" />
     <meta property="og:url" content="https://neteraduel.com/" />
     <meta property="og:image" content="https://neteraduel.com/og-image.png" />
     <meta property="og:image:width" content="1536" />
@@ -36,7 +46,31 @@
     <meta name="twitter:description" content="A friend has challenged you to a word duel." />
     <meta name="twitter:image" content="https://neteraduel.com/og-image.png" />
 
-    <title>NetEra Duel</title>
+    <!-- "NetEra Duel" stays the leading wordmark (see CLAUDE.md naming); the
+         tagline after it gives search results something to rank on. og.js
+         still rewrites the whole tag per duel, and src/App.jsx sets it per
+         route on the client. -->
+    <title>NetEra Duel — word duels from 25 years of internet slang</title>
+
+    <!-- Structured data for search engines. Invisible on the page; lets Google
+         classify this as a free browser game rather than a generic web page. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Netera Duel",
+      "url": "https://neteraduel.com/",
+      "description": "Friend-vs-friend word duels drawn from 25 years of internet slang. Pick a word from an era of the internet, send the link, and see who guesses faster.",
+      "applicationCategory": "GameApplication",
+      "genre": "Word game",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript",
+      "inLanguage": "en",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "GBP" },
+      "image": "https://neteraduel.com/og-image.png"
+    }
+    </script>
 
     <!-- Plausible: site-specific script auto-tracks pageviews on pushState
          navigation (our router uses history.pushState, see src/App.jsx), so
@@ -50,7 +84,14 @@
     </script>
   </head>
   <body>
+    <!-- #root is filled with the prerendered home screen by
+         scripts/prerender.mjs after `vite build`, so crawlers that don't run
+         JS still see real content. Keep it as a single empty element here —
+         the edge function for /d/* strips it back to exactly this shape. -->
     <div id="root"></div>
+    <noscript>
+      <p>Netera Duel is a free friend-vs-friend word game. Pick a word from an era of internet slang — Dial-Up Days, The MySpace Sprawl, Tumblr Dreams, The Flex &amp; Lockdown Years or Brainrot &amp; Beyond — send the link to a friend, and see who guesses it in fewer tries. It needs JavaScript to play.</p>
+    </noscript>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -14,3 +14,19 @@
   from = "/*"
   to = "/index.html"
   status = 200
+
+# Keep duel links out of search results — every /d/<slug> is a thin near-copy
+# of the home page. The edge function above also injects a robots meta tag;
+# this header covers the case where a crawler honours headers before markup.
+[[headers]]
+  for = "/d/*"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+# Vite fingerprints everything under /assets/, so it can be cached forever —
+# a changed file always has a new name. Faster repeat loads feed into Core Web
+# Vitals, which is a (small) ranking signal.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

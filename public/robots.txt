@@ -1,0 +1,9 @@
+# Duel links (/d/<slug>) are private-ish invitations between two people and
+# every one of them is a thin copy of the home page, so they're kept out of
+# the index by an X-Robots-Tag header (netlify.toml) and a robots meta tag
+# (netlify/edge-functions/og.js), not blocked here — a Disallow would stop
+# Google from ever seeing the noindex.
+User-agent: *
+Allow: /
+
+Sitemap: https://neteraduel.com/sitemap.xml

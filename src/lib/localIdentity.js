@@ -1,5 +1,7 @@
 // Anonymous, device-scoped identity — no accounts. Two things live in localStorage:
-//   1. a creatorId, used server-side only to enforce the 20-free-duels limit
+//   1. a creatorId, stamped on every duel server-side (per-device usage tracking;
+//      the 20-free-duels cap it once enforced is lifted for testing — see
+//      supabase/migrations/0004)
 //   2. a slug -> setterToken map, so a setter can reopen their own duel's status
 //      screen without that same power being reachable from the shared link.
 

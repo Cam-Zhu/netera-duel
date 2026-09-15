@@ -7,7 +7,7 @@ import { getEraById, getWordsForEra, getRandomEra, getRandomWord } from '../lib/
 import { createDuel } from '../lib/duelsApi'
 import { track } from '../lib/plausible'
 
-export default function SetWord({ onCreated, threadId, turnBack, onPlaySolo }) {
+export default function SetWord({ onCreated, threadId, parentDuelId, turnBack, onPlaySolo }) {
   const [eraId, setEraId] = useState(null)
   const [word, setWord] = useState(null)
   const [hint, setHint] = useState('')
@@ -48,6 +48,7 @@ export default function SetWord({ onCreated, threadId, turnBack, onPlaySolo }) {
         hideEraBand,
         setterName,
         threadId,
+        parentDuelId,
       })
       onCreated(slug)
     } catch (err) {

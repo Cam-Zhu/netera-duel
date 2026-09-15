@@ -3,7 +3,8 @@ import HintBanner from '../components/HintBanner'
 import GuessGrid from '../components/GuessGrid'
 import EraSkinProvider from '../components/EraSkinProvider'
 import HowToPlay from '../components/HowToPlay'
-import { fetchDuelForGuesser, submitGuess } from '../lib/duelsApi'
+import HeadToHead from '../components/HeadToHead'
+import { fetchDuelForGuesser, fetchThread, submitGuess } from '../lib/duelsApi'
 import { getEraByBand } from '../lib/wordbank'
 import { track } from '../lib/plausible'
 
@@ -12,16 +13,26 @@ export default function Guess({ slug, onFinished }) {
   const [input, setInput] = useState('')
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
+  const [thread, setThread] = useState(null)
 
   useEffect(() => {
     fetchDuelForGuesser(slug).then(setDuel)
   }, [slug])
 
+  const finished = !!duel && duel.status !== 'pending'
+  const threadId = duel?.thread_id
+
+  // The tally only matters once this duel is done — and it's the nudge to
+  // turn back, so it's fetched the moment the final guess lands, not just on
+  // reopening a finished link.
+  useEffect(() => {
+    if (finished && threadId) fetchThread(threadId).then(setThread)
+  }, [finished, threadId])
+
   if (!duel) return <p>Loading…</p>
 
   const pastGuesses = duel.guesses.map((g) => ({ guess: g.guess, feedback: g.feedback }))
   const era = duel.hide_era_band ? null : getEraByBand(duel.era_band)
-  const finished = duel.status !== 'pending'
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -82,11 +93,12 @@ export default function Guess({ slug, onFinished }) {
             {duel.status === 'won' && `Solved it in ${duel.guess_count}!`}
             {duel.status === 'lost' && `Out of guesses — the word was hidden, better luck next duel.`}
           </p>
+          <HeadToHead thread={thread} slug={slug} role="guesser" />
           <button
             className="button-primary"
             onClick={() => {
               track('Turn-Back Started')
-              onFinished(slug, duel.status, duel.thread_id)
+              onFinished(slug, duel.status, duel.thread_id, duel.id)
             }}
           >
             Pick another word

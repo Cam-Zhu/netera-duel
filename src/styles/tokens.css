@@ -330,3 +330,58 @@ input[type="text"] {
   flex-direction: column;
   gap: 8px;
 }
+
+/* Head-to-head tally. Rounds are the scoring unit (see lib/headToHead.js),
+   so the list is grouped by round with the two duels indented beneath. */
+.h2h {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.h2h h2 {
+  margin: 0;
+}
+
+.h2h__players {
+  margin: 0;
+  font-size: 13px;
+  color: #55504a;
+}
+
+.h2h__rounds {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.h2h__round-title {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.h2h__duels {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0 0 0 12px;
+  border-left: 3px solid #c9c3b8;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.h2h__duel--current {
+  font-weight: 600;
+}
+
+.h2h__score {
+  margin: 0;
+  font-weight: 700;
+  border-left: 4px solid var(--accent);
+  padding: 8px 12px;
+}

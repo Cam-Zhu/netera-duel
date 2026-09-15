@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import ShareCard from '../components/ShareCard'
 import EraSkinProvider from '../components/EraSkinProvider'
+import HeadToHead from '../components/HeadToHead'
 import { fetchDuelForSetter, fetchThread } from '../lib/duelsApi'
 import { getSetterToken } from '../lib/localIdentity'
 import { getEraByBand } from '../lib/wordbank'
@@ -70,18 +71,7 @@ export default function ShareLink({ slug, onHome }) {
         </p>
       )}
 
-      {thread && thread.length > 1 && (
-        <div>
-          <h2>Head to head</h2>
-          <ul>
-            {thread.map((t) => (
-              <li key={t.slug}>
-                {t.slug === slug ? 'This duel' : 'Turn-back'} — {t.status} in {t.guess_count} guesses
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      <HeadToHead thread={thread} slug={slug} role="setter" />
 
       <BackHome onHome={onHome} />
     </EraSkinProvider>

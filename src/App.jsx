@@ -61,6 +61,7 @@ function DuelRoute({ slug }) {
     return (
       <SetWord
         threadId={turnBack.threadId}
+        parentDuelId={turnBack.parentDuelId}
         turnBack
         onCreated={(newSlug) => navigate(`/d/${newSlug}`)}
       />
@@ -70,7 +71,7 @@ function DuelRoute({ slug }) {
   return (
     <Guess
       slug={slug}
-      onFinished={(_slug, _status, threadId) => setTurnBack({ threadId })}
+      onFinished={(_slug, _status, threadId, parentDuelId) => setTurnBack({ threadId, parentDuelId })}
     />
   )
 }

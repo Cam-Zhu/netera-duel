@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { track } from '../lib/plausible'
 
 // The setter and the guesser arrive at very different screens, so the modal
 // is worded from whichever side is reading it: the setter needs the whole
@@ -30,13 +31,18 @@ function GuesserSteps() {
 export default function HowToPlay({ variant = 'setter' }) {
   const [open, setOpen] = useState(false)
 
+  const openModal = () => {
+    setOpen(true)
+    track('How To Play Opened', { variant })
+  }
+
   return (
     <>
       <button
         type="button"
         className="help-button"
         aria-label="How to play"
-        onClick={() => setOpen(true)}
+        onClick={openModal}
       >
         ?
       </button>

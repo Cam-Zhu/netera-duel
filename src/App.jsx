@@ -6,12 +6,22 @@ import SoloPlay from './screens/SoloPlay'
 import { isOwnDuel } from './lib/localIdentity'
 import { track } from './lib/plausible'
 
-// No router dependency — the app only ever has two shapes of URL, so a tiny
-// pathname parser plus the History API covers it.
+// No router dependency — the app only ever has three shapes of URL, so a
+// tiny pathname parser plus the History API covers it. /solo is a real URL
+// (not just a home-screen toggle) so off-site posts can link straight to it
+// — a "guess this word yourself" CTA — without a click through the home
+// screen.
 function parseRoute(pathname) {
-  const match = pathname.match(/^\/d\/([^/]+)\/?$/)
-  return match ? { name: 'duel', slug: match[1] } : { name: 'home' }
+  const duel = pathname.match(/^\/d\/([^/]+)\/?$/)
+  if (duel) return { name: 'duel', slug: duel[1] }
+  if (/^\/solo\/?$/.test(pathname)) return { name: 'solo' }
+  return { name: 'home' }
 }
+
+// Whether this page load landed straight on /solo (a shared link) rather
+// than getting there via the home screen's button. Read once, before any
+// navigation, so the analytics event can tell the two apart.
+const landedOnSolo = parseRoute(window.location.pathname).name === 'solo'
 
 function navigate(path) {
   window.history.pushState({}, '', path)
@@ -25,7 +35,6 @@ const SOLO_TITLE = 'Solo play · NetEra Duel'
 
 export default function App() {
   const [pathname, setPathname] = useState(window.location.pathname)
-  const [solo, setSolo] = useState(false)
 
   useEffect(() => {
     const onPopState = () => setPathname(window.location.pathname)
@@ -35,22 +44,31 @@ export default function App() {
 
   const route = parseRoute(pathname)
 
-  // Only the home route owns the tab title. On /d/<slug> the edge function
-  // (netlify/edge-functions/og.js) has already written a personalised one —
-  // "Cam's challenged you to a word duel" — and overwriting it from here would
-  // throw that away.
+  // Only the home and solo routes own the tab title. On /d/<slug> the edge
+  // function (netlify/edge-functions/og.js) has already written a
+  // personalised one — "Cam's challenged you to a word duel" — and
+  // overwriting it from here would throw that away.
   useEffect(() => {
-    if (route.name === 'home') document.title = solo ? SOLO_TITLE : HOME_TITLE
-  }, [route.name, solo])
+    if (route.name === 'home') document.title = HOME_TITLE
+    if (route.name === 'solo') document.title = SOLO_TITLE
+  }, [route.name])
+
+  // The home button tracks its own click below; this covers arriving by URL.
+  useEffect(() => {
+    if (landedOnSolo) track('Solo Mode Opened', { method: 'link' })
+  }, [])
+
+  if (route.name === 'solo') {
+    return <SoloPlay onExit={() => navigate('/')} />
+  }
 
   if (route.name === 'home') {
-    if (solo) return <SoloPlay onExit={() => setSolo(false)} />
     return (
       <SetWord
         onCreated={(slug) => navigate(`/d/${slug}`)}
         onPlaySolo={() => {
-          track('Solo Mode Opened')
-          setSolo(true)
+          track('Solo Mode Opened', { method: 'home' })
+          navigate('/solo')
         }}
       />
     )

@@ -2,9 +2,9 @@ import { supabase } from './supabaseClient'
 import { getCreatorId, rememberOwnDuel } from './localIdentity'
 import { track } from './plausible'
 
-// Thin wrappers around the RPC functions defined in
-// supabase/migrations/0001_init.sql. The client never reads/writes the
-// `duels` table directly — see that file for why.
+// Thin wrappers around the RPC functions defined in supabase/migrations/
+// (0001_init.sql, re-issued by later migrations). The client never
+// reads/writes the `duels` table directly — see that file for why.
 
 export async function createDuel({ eraBand, secretWord, hint, hideEraBand, setterName, threadId, parentDuelId }) {
   const { data, error } = await supabase.rpc('create_duel', {
@@ -31,8 +31,14 @@ export async function createDuel({ eraBand, secretWord, hint, hideEraBand, sette
   return { slug, setterToken }
 }
 
+// The device id goes along so the server can say whether this duel has been
+// claimed by someone else (`taken`), in which case the row comes back with
+// guesses/status/thread nulled — see migration 0007.
 export async function fetchDuelForGuesser(slug) {
-  const { data, error } = await supabase.rpc('get_duel_for_guesser', { p_slug: slug })
+  const { data, error } = await supabase.rpc('get_duel_for_guesser', {
+    p_slug: slug,
+    p_guesser_id: getCreatorId(),
+  })
   if (error) throw error
   return data[0] ?? null
 }
@@ -49,11 +55,18 @@ export async function fetchThread(threadId) {
   return data
 }
 
+// The first successful call from a device claims the duel for that device;
+// every other device gets DUEL_TAKEN from then on.
 export async function submitGuess(slug, guess) {
-  const { data, error } = await supabase.rpc('submit_guess', { p_slug: slug, p_guess: guess })
+  const { data, error } = await supabase.rpc('submit_guess', {
+    p_slug: slug,
+    p_guess: guess,
+    p_guesser_id: getCreatorId(),
+  })
   if (error) {
     if (error.message?.includes('wrong_length')) throw new Error('WRONG_LENGTH')
     if (error.message?.includes('duel_already_finished')) throw new Error('ALREADY_FINISHED')
+    if (error.message?.includes('duel_taken')) throw new Error('DUEL_TAKEN')
     throw error
   }
   const result = data[0]

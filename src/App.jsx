@@ -99,10 +99,13 @@ function DuelRoute({ slug }) {
     )
   }
 
+  // onSetOwn is the exit from the "taken" screen — plain home, not a
+  // turn-back, so the bounced visitor starts their own thread.
   return (
     <Guess
       slug={slug}
       onFinished={(_slug, _status, threadId, parentDuelId) => setTurnBack({ threadId, parentDuelId })}
+      onSetOwn={() => navigate('/')}
     />
   )
 }

@@ -1,7 +1,9 @@
 // Anonymous, device-scoped identity — no accounts. Two things live in localStorage:
 //   1. a creatorId, stamped on every duel server-side (per-device usage tracking;
 //      the 20-free-duels cap it once enforced is lifted for testing — see
-//      supabase/migrations/0004)
+//      supabase/migrations/0004). The same id is sent when guessing: the first
+//      guess claims the duel for this device and every other device is bounced
+//      to the "taken" screen (0007). One id per device covers both roles.
 //   2. a slug -> setterToken map, so a setter can reopen their own duel's status
 //      screen without that same power being reachable from the shared link.
 

@@ -4,19 +4,27 @@ import GuessGrid from '../components/GuessGrid'
 import EraSkinProvider from '../components/EraSkinProvider'
 import HowToPlay from '../components/HowToPlay'
 import HeadToHead from '../components/HeadToHead'
+import DuelTaken from '../components/DuelTaken'
 import { fetchDuelForGuesser, fetchThread, submitGuess } from '../lib/duelsApi'
 import { getEraByBand } from '../lib/wordbank'
 import { track } from '../lib/plausible'
 
-export default function Guess({ slug, onFinished }) {
+export default function Guess({ slug, onFinished, onSetOwn }) {
   const [duel, setDuel] = useState(null)
   const [input, setInput] = useState('')
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [thread, setThread] = useState(null)
+  // Set when another device has claimed this duel: 'open' if it was already
+  // taken on arrival, 'guess' if someone beat this device to the first guess
+  // while the grid was on screen.
+  const [takenStage, setTakenStage] = useState(null)
 
   useEffect(() => {
-    fetchDuelForGuesser(slug).then(setDuel)
+    fetchDuelForGuesser(slug).then((d) => {
+      setDuel(d)
+      if (d?.taken) setTakenStage('open')
+    })
   }, [slug])
 
   const finished = !!duel && duel.status !== 'pending'
@@ -31,8 +39,20 @@ export default function Guess({ slug, onFinished }) {
 
   if (!duel) return <p>Loading…</p>
 
-  const pastGuesses = duel.guesses.map((g) => ({ guess: g.guess, feedback: g.feedback }))
   const era = duel.hide_era_band ? null : getEraByBand(duel.era_band)
+
+  if (takenStage) {
+    return (
+      <DuelTaken
+        setterName={duel.setter_name}
+        eraId={era?.id}
+        stage={takenStage}
+        onSetOwn={onSetOwn}
+      />
+    )
+  }
+
+  const pastGuesses = duel.guesses.map((g) => ({ guess: g.guess, feedback: g.feedback }))
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -52,6 +72,10 @@ export default function Guess({ slug, onFinished }) {
       }))
       setInput('')
     } catch (err) {
+      if (err.message === 'DUEL_TAKEN') {
+        setTakenStage('guess')
+        return
+      }
       setError('Could not submit that guess — try again.')
       console.error(err)
     } finally {

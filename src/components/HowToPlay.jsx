@@ -60,7 +60,6 @@ export default function HowToPlay({ variant = 'setter' }) {
             </button>
             <h2>How to play</h2>
             {variant === 'guesser' ? <GuesserSteps /> : <SetterSteps />}
-            <p>Works best in 1-to-1 chats for now, multiplayer coming soon.</p>
             <p>GL HF</p>
           </div>
         </div>

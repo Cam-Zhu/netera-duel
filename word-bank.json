@@ -75,7 +75,7 @@
     { "word": "photobomb", "era": "myspace-sprawl", "meaning": "To unexpectedly intrude on someone's photo", "origin": "web/blogs", "year": "late 2000s" },
     { "word": "screencap", "era": "myspace-sprawl", "meaning": "A screenshot", "origin": "forums", "year": "2000s" },
     { "word": "bump", "era": "myspace-sprawl", "meaning": "To reply to a thread just to push it back up", "origin": "forums", "year": "2000s" },
-    { "word": "tl;dr", "era": "myspace-sprawl", "meaning": "Too long; didn't read", "origin": "forums/Reddit", "year": "late 2000s" },
+    { "word": "tldr", "alt": "tl;dr", "era": "myspace-sprawl", "meaning": "Too long; didn't read", "origin": "forums/Reddit", "year": "late 2000s" },
     { "word": "op", "era": "myspace-sprawl", "meaning": "Original poster", "origin": "forums/Reddit", "year": "2000s" },
     { "word": "ama", "era": "myspace-sprawl", "meaning": "Ask me anything", "origin": "Reddit", "year": "2009-2010" },
     { "word": "upvote", "era": "myspace-sprawl", "meaning": "To vote a post up", "origin": "Reddit/Digg", "year": "late 2000s" },

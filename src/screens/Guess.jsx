@@ -5,6 +5,7 @@ import EraSkinProvider from '../components/EraSkinProvider'
 import HowToPlay from '../components/HowToPlay'
 import HeadToHead from '../components/HeadToHead'
 import DuelTaken from '../components/DuelTaken'
+import DuelNotice from '../components/DuelNotice'
 import { fetchDuelForGuesser, fetchThread, submitGuess } from '../lib/duelsApi'
 import { getEraByBand } from '../lib/wordbank'
 import { track } from '../lib/plausible'
@@ -19,13 +20,36 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
   // taken on arrival, 'guess' if someone beat this device to the first guess
   // while the grid was on screen.
   const [takenStage, setTakenStage] = useState(null)
+  // How the initial fetch went. 'not_found' is the RPC answering with no row
+  // (a mistyped, cut-off or deleted link); 'error' is it not answering at all
+  // (offline, or the client and DB briefly disagreeing on a function
+  // signature mid-deploy). Bumping `attempt` re-runs the fetch.
+  const [loadState, setLoadState] = useState('loading')
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
-    fetchDuelForGuesser(slug).then((d) => {
-      setDuel(d)
-      if (d?.taken) setTakenStage('open')
-    })
-  }, [slug])
+    let cancelled = false
+    setLoadState('loading')
+    fetchDuelForGuesser(slug)
+      .then((d) => {
+        if (cancelled) return
+        if (!d) {
+          setLoadState('not_found')
+          return
+        }
+        setDuel(d)
+        if (d.taken) setTakenStage('open')
+        setLoadState('ready')
+      })
+      .catch((err) => {
+        if (cancelled) return
+        console.error(err)
+        setLoadState('error')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [slug, attempt])
 
   const finished = !!duel && duel.status !== 'pending'
   const threadId = duel?.thread_id
@@ -36,6 +60,34 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
   useEffect(() => {
     if (finished && threadId) fetchThread(threadId).then(setThread)
   }, [finished, threadId])
+
+  if (loadState === 'not_found') {
+    return (
+      <DuelNotice
+        title="Couldn't find that duel"
+        primaryLabel="Set your own word"
+        onPrimary={onSetOwn}
+        shownEvent="Duel Not Found Shown"
+      >
+        The link might be mistyped or cut off. Ask your friend to send it again, or set your own word.
+      </DuelNotice>
+    )
+  }
+
+  if (loadState === 'error') {
+    return (
+      <DuelNotice
+        title="Something went wrong"
+        primaryLabel="Try again"
+        onPrimary={() => setAttempt((n) => n + 1)}
+        secondaryLabel="Set your own word"
+        onSecondary={onSetOwn}
+        shownEvent="Duel Load Error Shown"
+      >
+        We couldn't load this duel. Check your connection and try again.
+      </DuelNotice>
+    )
+  }
 
   if (!duel) return <p>Loading…</p>
 

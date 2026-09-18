@@ -169,11 +169,23 @@ h1 + p {
 }
 
 .hint-banner {
-  border-left: 4px solid var(--accent);
-  padding: 8px 12px;
+  position: relative;
+  padding: 8px 12px 8px 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.hint-banner::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  /* background (not border-color) so this still works for the
+     Brainrot & Beyond gradient accent, not just solid colors */
+  background: var(--accent);
 }
 
 .hint-banner__era {
@@ -369,15 +381,16 @@ input[type="text"] {
   gap: 8px;
 }
 
-/* Head-to-head tally. Rounds are the scoring unit (see lib/headToHead.js).
-   The scoreboard and the spine are drawn aria-hidden; the sentences the lib
-   already writes stay in the DOM (.h2h__sr) as the accessible reading.
-   Colour budget: --accent and --ink only. The feedback greens/yellows are
-   the grid's and never appear here. */
+/* Head-to-head tally. Rounds are the scoring unit (see lib/headToHead.js):
+   one card per round, built like a word-list row, with the stripe on the
+   left edge carrying the outcome. Inside, one row per duel headed by its
+   guesser. The score block reuses the hint banner. Colour rule as
+   everywhere else in the app: accent as an edge, never as a fill — pips are
+   ink, and the feedback greens/yellows never appear here. */
 .h2h {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
   --h2h-line: #c9c3b8;
   --h2h-muted: #55504a;
 }
@@ -386,305 +399,164 @@ input[type="text"] {
   margin: 0;
 }
 
-.h2h__players,
-.h2h__note {
+.h2h__players {
   margin: 0;
   font-size: 13px;
   color: var(--h2h-muted);
 }
 
-.h2h__note {
-  text-align: center;
+.h2h__score-line {
+  margin: 0;
 }
 
-.h2h__sr {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* Scoreboard: two names, two numerals, a divider. The leader's numeral takes
-   the accent; level scores put it on the divider instead. */
-.h2h__board {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  column-gap: 16px;
-  padding: 4px 0;
-}
-
-.h2h__side {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.h2h__side-name {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.h2h__divider {
-  width: 1px;
-  height: 48px;
-  background: var(--h2h-line);
-}
-
-.h2h__board--level .h2h__divider {
-  width: 3px;
-  border-radius: 2px;
-  background: var(--accent);
-}
-
-/* The digit is a CSS counter over a registered custom property so the
-   count-up on mount is a keyframe. Where @property is unsupported the value
-   still renders; only the tween is lost. */
-@property --h2h-n {
-  syntax: '<integer>';
-  initial-value: 0;
-  inherits: false;
-}
-
-.h2h__num {
-  --h2h-n: 0;
-  counter-reset: h2h-n var(--h2h-n);
-  font-size: 44px;
-  font-weight: 800;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.h2h__num::after {
-  content: counter(h2h-n);
-}
-
-.h2h__num--lead::after {
-  /* background-clip rather than color so the Brainrot gradient works */
-  background: var(--accent);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.h2h__score-note {
+  margin: 0;
+  font-size: 13px;
+  color: var(--h2h-muted);
 }
 
 .h2h__more {
-  align-self: center;
+  align-self: flex-start;
   background: transparent;
   border: none;
-  padding: 4px 8px;
+  padding: 0;
   font-size: 13px;
   color: var(--h2h-muted);
   text-decoration: underline;
 }
 
-/* The spine. Each round is a three-column grid — viewer's side, the line,
-   opponent's side — with the round node on the line and each word on its
-   setter's side, first half on row 1 and second on row 2, so a round reads
-   top-down as the exchange it was. */
-.h2h__spine {
+.h2h__rounds {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  --h2h-node: 24px;
+  gap: 20px;
 }
 
+/* The card: same box as .word-list__option, with the stripe's colour
+   set per outcome below. */
 .h2h__round {
   position: relative;
-  display: grid;
-  grid-template-columns: 1fr var(--h2h-node) 1fr;
-  grid-template-rows: auto auto;
-  column-gap: 12px;
-  row-gap: 6px;
-  padding: 4px 0;
+  overflow: hidden; /* clips the stripe to the rounded corners */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: #fff;
+  border: 1px solid var(--h2h-line);
+  border-radius: 8px;
+  padding: 10px 14px 12px 20px;
 }
 
 .h2h__round::before {
   content: '';
   position: absolute;
+  left: 0;
   top: 0;
-  bottom: -12px; /* bridge the list gap so the line is continuous */
-  left: 50%;
-  width: 2px;
-  margin-left: -1px;
-  background: var(--h2h-line);
-}
-
-.h2h__round:last-child::before {
   bottom: 0;
-}
-
-.h2h__node {
-  position: relative;
-  z-index: 1;
-  grid-column: 2;
-  grid-row: 1;
-  width: var(--h2h-node);
-  height: var(--h2h-node);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-  background: var(--paper);
-  border: 2px solid var(--ink);
-  color: var(--ink);
-}
-
-.h2h__round--won .h2h__node {
+  width: 5px;
+  border-radius: 8px 0 0 8px;
+  /* background (not border-color) so the Brainrot gradient works */
   background: var(--accent);
-  border-color: transparent;
-  color: var(--accent-contrast);
 }
 
-.h2h__round--lost .h2h__node {
-  background: var(--ink);
-  color: var(--paper);
+.h2h__round--lost::before {
+  background: color-mix(in srgb, var(--ink) 30%, transparent);
 }
 
-.h2h__round--draw .h2h__node {
-  /* half-filled: a diagonal ink tint under the number */
-  background: linear-gradient(135deg, color-mix(in srgb, var(--ink) 45%, var(--paper)) 50%, var(--paper) 50%);
+/* Drawn: split stripe, accent above and ink below. */
+.h2h__round--draw::before {
+  bottom: 50%;
+  border-radius: 8px 0 0 0;
 }
 
-.h2h__round--pending .h2h__node {
-  border-color: var(--h2h-line);
+.h2h__round--draw::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  bottom: 0;
+  width: 5px;
+  border-radius: 0 0 0 8px;
+  background: color-mix(in srgb, var(--ink) 30%, transparent);
 }
 
-.h2h__round--void .h2h__node {
-  border-style: dashed;
-  border-color: var(--h2h-line);
-  color: var(--h2h-muted);
+.h2h__round--void::before,
+.h2h__round--pending::before {
+  width: 0;
+  background: none;
+  border-left: 5px dashed var(--h2h-line);
+  border-radius: 0;
 }
 
-.h2h__entry {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-  font-size: 12px;
-  color: var(--h2h-muted);
+.h2h__round--pending {
+  opacity: 0.7;
 }
 
-.h2h__entry--mine {
-  grid-column: 1;
-  align-items: flex-end;
-  text-align: right;
-  padding-right: 2px;
-}
-
-.h2h__entry--theirs {
-  grid-column: 3;
-  align-items: flex-start;
-  text-align: left;
-  padding-left: 4px;
-}
-
-.h2h__entry-name {
-  font-size: 12px;
+.h2h__round-title {
   font-weight: 700;
   text-transform: uppercase;
+  font-size: 12px;
   letter-spacing: 0.04em;
-  color: var(--ink);
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  color: var(--h2h-muted);
 }
 
-.h2h__count {
-  font-size: 18px;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--ink);
-  font-variant-numeric: tabular-nums;
-  min-height: 18px;
+.h2h__duel {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
-.h2h__entry--current .h2h__entry-text {
+.h2h__duel-label {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.h2h__duel-text {
+  font-size: 13px;
+  color: var(--h2h-muted);
+}
+
+.h2h__duel-text strong {
+  color: var(--ink);
+}
+
+.h2h__duel--current .h2h__duel-text {
   font-weight: 600;
   color: var(--ink);
 }
 
-.h2h__entry--expired,
-.h2h__round--void .h2h__entry {
+.h2h__duel--expired,
+.h2h__round--void .h2h__duel {
   opacity: 0.55;
 }
 
-.h2h__entry--ghost {
-  border: 1px dashed var(--h2h-line);
-  border-radius: 8px;
-  padding: 8px 10px;
-  margin-top: 2px;
-  width: max-content;
-}
-
-.h2h__entry--ghost.h2h__entry--mine {
-  justify-self: end;
-}
-
-.h2h__entry--ghost.h2h__entry--theirs {
-  justify-self: start;
-}
-
-/* Pips: six per duel, filled for guesses used. The fill colour follows the
-   side — the viewer's words in the accent, the opponent's in ink — and each
-   filled pip shows a slice of one row-wide background, so Brainrot's
-   gradient sweeps across the row instead of repeating inside every dot. */
+/* Pips: six per duel, filled for guesses used, all in ink. */
 .h2h__pips {
-  --h2h-pip: 8px;
-  --h2h-pip-gap: 4px;
-  --h2h-pip-fill: var(--ink);
-  --h2h-pip-alpha: 0.6;
   display: flex;
-  gap: var(--h2h-pip-gap);
-  width: calc(var(--h2h-pip) * 6 + var(--h2h-pip-gap) * 5);
-  flex-shrink: 0;
-}
-
-.h2h__entry--mine .h2h__pips {
-  --h2h-pip-fill: var(--accent);
-  --h2h-pip-alpha: 1;
+  gap: 4px;
+  padding: 2px 0;
 }
 
 .h2h__pip {
   position: relative;
-  width: var(--h2h-pip);
-  height: var(--h2h-pip);
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   border: 1px solid var(--ink);
-  opacity: 0.3;
+  opacity: 0.25;
 }
 
 .h2h__pip--filled {
   border: none;
-  opacity: var(--h2h-pip-alpha);
-  background: var(--h2h-pip-fill);
-  background-size: calc(var(--h2h-pip) * 6 + var(--h2h-pip-gap) * 5) 100%;
-  background-position: calc(var(--p) * (var(--h2h-pip) + var(--h2h-pip-gap)) * -1) 0;
+  background: var(--ink);
+  opacity: 0.85;
 }
 
 .h2h__pip--lost {
-  border-color: var(--ink);
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 .h2h__pip--lost::before,
@@ -707,16 +579,6 @@ input[type="text"] {
    removed, so nothing replays on re-render or when older rounds expand.
    Only opacity and transform move — no layout, no scroll jump under the
    result the player is reading. */
-.h2h--enter .h2h__num {
-  animation: h2h-count 400ms ease-out both;
-}
-
-@keyframes h2h-count {
-  from {
-    --h2h-n: 0;
-  }
-}
-
 .h2h--enter .h2h__round {
   animation: h2h-rise 320ms ease-out both;
   animation-delay: min(calc(var(--i) * 60ms), 300ms);
@@ -743,7 +605,6 @@ input[type="text"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .h2h--enter .h2h__num,
   .h2h--enter .h2h__round,
   .h2h--enter .h2h__pip--filled,
   .h2h--enter .h2h__pip--lost {

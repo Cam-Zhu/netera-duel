@@ -33,11 +33,13 @@ export function buildHeadToHead(thread, viewer) {
     const duels = thread.slice(i, i + 2)
     rounds.push({
       number: rounds.length + 1,
-      // Alongside the sentence, the raw facts the spine draws from: who set
-      // it, whether it's done, and the guess count (null until it is).
+      // Alongside the sentence, the raw facts the cards draw from: who set
+      // it, who guessed it, whether it's done, and the guess count (null
+      // until it is).
       duels: duels.map((d) => ({
         slug: d.slug,
         setBy: d.set_by,
+        guesser: other(d.set_by),
         status: d.status,
         guessCount: d.status === 'won' || d.status === 'lost' ? d.guess_count : null,
         text: describe(d, label, possessive),
@@ -130,7 +132,7 @@ function scoreLine(wins, draws, rounds, viewer, label) {
   let line
   if (mine > theirs) line = `You lead ${mine}–${theirs}`
   else if (theirs > mine) line = `${label(other(viewer))} leads ${theirs}–${mine}`
-  else line = `Level at ${mine}–${theirs}`
+  else line = `You're level at ${mine}–${theirs}`
 
   if (draws > 0) line += ` (${draws} drawn)`
   if (inPlay) line += ` — round ${inPlay.number} in play`

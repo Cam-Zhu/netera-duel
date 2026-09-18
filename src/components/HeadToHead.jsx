@@ -11,14 +11,15 @@ const SHOW_RECENT = 3
 // replay it.
 const ENTER_MS = 1600
 
-// Round-by-round tally for a thread, drawn from the viewer's side. `role`
+// Round-by-round tally for a thread, worded from the viewer's side. `role`
 // says how the viewer relates to `slug` — they either set it or guessed it —
 // which is enough to work out which player they are without any identity
 // leaving the browser.
 //
-// The visuals are the scoreboard, a spine with each word on its setter's
-// side, and a pip row per duel. All of it is aria-hidden; the sentences from
-// lib/headToHead.js stay in the DOM as the accessible reading.
+// One card per round, built like a word-list row: the stripe on its left
+// edge carries the outcome. Inside, one row per duel headed by whoever
+// GUESSED it, so the pips and the count under a name are that person's.
+// Pips are aria-hidden; the sentence from lib/headToHead.js is the reading.
 export default function HeadToHead({ thread, slug, role }) {
   if (!thread || thread.length < 2) return null
 
@@ -31,7 +32,7 @@ export default function HeadToHead({ thread, slug, role }) {
 }
 
 function Tally({ thread, slug, viewer }) {
-  const { label, rounds, score, tally } = buildHeadToHead(thread, viewer)
+  const { label, rounds, tally } = buildHeadToHead(thread, viewer)
   const opponent = viewer === 1 ? 2 : 1
   const opponentName = label(opponent)
   const opponentHasName = opponentName !== `Player ${opponent}`
@@ -47,10 +48,6 @@ function Tally({ thread, slug, viewer }) {
   const shown = collapsible ? rounds.slice(-SHOW_RECENT) : rounds
   const hidden = rounds.length - shown.length
 
-  const notes = []
-  if (tally.draws > 0) notes.push(`${tally.draws} drawn`)
-  if (tally.inPlay) notes.push(`Round ${tally.inPlay} in play`)
-
   return (
     <section className={entering ? 'h2h h2h--enter' : 'h2h'}>
       <h2>Head to head</h2>
@@ -59,16 +56,14 @@ function Tally({ thread, slug, viewer }) {
         {opponentHasName && ` · ${opponentName} is Player ${opponent}`}
       </p>
 
-      <Scoreboard mine={tally.mine} theirs={tally.theirs} opponentName={opponentName} />
-      {score && <p className="h2h__sr">{score}</p>}
-      {notes.length > 0 && <p className="h2h__note">{notes.join(' · ')}</p>}
+      <Score tally={tally} opponentName={opponentName} />
 
       {collapsible && (
         <button type="button" className="h2h__more" onClick={() => setExpanded(true)}>
           Show {hidden} earlier {hidden === 1 ? 'round' : 'rounds'}
         </button>
       )}
-      <ol className="h2h__spine">
+      <ol className="h2h__rounds">
         {shown.map((r, i) => (
           <Round key={r.number} round={r} index={i} viewer={viewer} label={label} currentSlug={slug} />
         ))}
@@ -77,76 +72,54 @@ function Tally({ thread, slug, viewer }) {
   )
 }
 
-function Scoreboard({ mine, theirs, opponentName }) {
-  const level = mine === theirs
+// Same block as the hint banner: accent rule, small-caps label, then the
+// score as a sentence with the figures bold.
+function Score({ tally, opponentName }) {
+  const { mine, theirs, draws, inPlay } = tally
+  const played = mine + theirs + draws
+
+  let sentence
+  if (played === 0) sentence = 'Nothing scored yet'
+  else if (mine > theirs) sentence = <>You lead <strong>{mine}–{theirs}</strong></>
+  else if (theirs > mine) sentence = <>{opponentName} leads <strong>{theirs}–{mine}</strong></>
+  else sentence = <>You're level at <strong>{mine}–{theirs}</strong></>
+
+  const notes = []
+  if (draws > 0) notes.push(`${draws} drawn`)
+  if (inPlay) notes.push(`Round ${inPlay} in play`)
+
   return (
-    <div className={level ? 'h2h__board h2h__board--level' : 'h2h__board'} aria-hidden="true">
-      <div className="h2h__side">
-        <span className="h2h__side-name">You</span>
-        <Numeral value={mine} lead={mine > theirs} />
-      </div>
-      <span className="h2h__divider" />
-      <div className="h2h__side">
-        <span className="h2h__side-name">{opponentName}</span>
-        <Numeral value={theirs} lead={theirs > mine} />
-      </div>
+    <div className="hint-banner h2h__score">
+      <span className="hint-banner__era">Score</span>
+      <p className="h2h__score-line">{sentence}</p>
+      {notes.length > 0 && <p className="h2h__score-note">{notes.join(' · ')}</p>}
     </div>
   )
 }
 
-// The digits are drawn by CSS from --h2h-n (a counter in ::after) so the
-// count-up on mount can be a keyframe rather than script.
-function Numeral({ value, lead }) {
-  return <span className={lead ? 'h2h__num h2h__num--lead' : 'h2h__num'} style={{ '--h2h-n': value }} />
-}
-
 function Round({ round, index, viewer, label, currentSlug }) {
-  // The round is chronological down the page: first half on row 1 beside the
-  // node, second half on row 2. A missing second half becomes a ghost on the
-  // side of whoever's turn it is to set — the guesser of the first half.
-  const entries = round.duels.map((d, i) => (
-    <Entry key={d.slug} duel={d} row={i + 1} viewer={viewer} label={label} current={d.slug === currentSlug} />
-  ))
-  if (round.duels.length === 1) {
-    entries.push(<Ghost key="ghost" side={round.duels[0].setBy === viewer ? 'theirs' : 'mine'} row={2} />)
-  }
-
   return (
     <li className={`h2h__round h2h__round--${outcomeClass(round.outcome, viewer)}`} style={{ '--i': index }}>
-      <span className="h2h__node" aria-hidden="true">
-        {round.number}
-      </span>
-      <span className="h2h__sr">{round.title}</span>
-      {entries}
+      <span className="h2h__round-title">{round.title}</span>
+      {round.duels.map((d) => (
+        <Duel key={d.slug} duel={d} label={label} current={d.slug === currentSlug} />
+      ))}
     </li>
   )
 }
 
-function Entry({ duel, row, viewer, label, current }) {
-  const side = duel.setBy === viewer ? 'mine' : 'theirs'
-  const classes = ['h2h__entry', `h2h__entry--${side}`]
-  if (current) classes.push('h2h__entry--current')
-  if (duel.status === 'expired') classes.push('h2h__entry--expired')
+function Duel({ duel, label, current }) {
+  const classes = ['h2h__duel']
+  if (current) classes.push('h2h__duel--current')
+  if (duel.status === 'expired') classes.push('h2h__duel--expired')
 
-  const lost = duel.status === 'lost'
   return (
-    <div className={classes.join(' ')} style={{ gridRow: row }}>
-      <span className="h2h__entry-name" aria-hidden="true">
-        {label(duel.setBy)}
+    <div className={classes.join(' ')}>
+      <span className="h2h__duel-label" aria-hidden="true">
+        {label(duel.guesser)}
       </span>
-      <Pips filled={duel.guessCount ?? 0} lost={lost} />
-      <span className="h2h__count" aria-hidden="true">
-        {lost ? '✕' : duel.guessCount ?? ''}
-      </span>
-      <span className="h2h__entry-text">{duel.text}</span>
-    </div>
-  )
-}
-
-function Ghost({ side, row }) {
-  return (
-    <div className={`h2h__entry h2h__entry--${side} h2h__entry--ghost`} style={{ gridRow: row }} aria-hidden="true">
-      <Pips filled={0} />
+      <Pips filled={duel.guessCount ?? 0} lost={duel.status === 'lost'} />
+      <span className="h2h__duel-text">{emphasiseCount(duel.text, duel.guessCount)}</span>
     </div>
   )
 }
@@ -166,6 +139,20 @@ function Pips({ filled, lost = false }) {
     <span className="h2h__pips" aria-hidden="true">
       {pips}
     </span>
+  )
+}
+
+// "You solved Jess's in 3 guesses" → the 3 in bold. The count only appears
+// in the sentence once, right after "in ".
+function emphasiseCount(text, count) {
+  if (count == null) return text
+  const needle = ` in ${count} `
+  const at = text.indexOf(needle)
+  if (at < 0) return text
+  return (
+    <>
+      {text.slice(0, at)} in <strong>{count}</strong> {text.slice(at + needle.length)}
+    </>
   )
 }
 

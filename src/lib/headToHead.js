@@ -33,7 +33,15 @@ export function buildHeadToHead(thread, viewer) {
     const duels = thread.slice(i, i + 2)
     rounds.push({
       number: rounds.length + 1,
-      duels: duels.map((d) => ({ slug: d.slug, text: describe(d, label, possessive) })),
+      // Alongside the sentence, the raw facts the spine draws from: who set
+      // it, whether it's done, and the guess count (null until it is).
+      duels: duels.map((d) => ({
+        slug: d.slug,
+        setBy: d.set_by,
+        status: d.status,
+        guessCount: d.status === 'won' || d.status === 'lost' ? d.guess_count : null,
+        text: describe(d, label, possessive),
+      })),
       outcome: roundOutcome(duels),
     })
   }
@@ -45,10 +53,14 @@ export function buildHeadToHead(thread, viewer) {
     else if (r.outcome === 1 || r.outcome === 2) wins[r.outcome] += 1
   }
 
+  const inPlay = rounds.find((r) => r.outcome === 'pending')
+
   return {
     label,
     rounds: rounds.map((r) => ({ ...r, title: roundTitle(r, label) })),
     score: scoreLine(wins, draws, rounds, viewer, label),
+    // The same numbers the sentence is built from, for the scoreboard.
+    tally: { mine: wins[viewer], theirs: wins[other(viewer)], draws, inPlay: inPlay?.number ?? null },
   }
 }
 

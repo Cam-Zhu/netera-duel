@@ -6,6 +6,7 @@ import HowToPlay from '../components/HowToPlay'
 import HeadToHead from '../components/HeadToHead'
 import DuelTaken from '../components/DuelTaken'
 import DuelNotice from '../components/DuelNotice'
+import ShareResult from '../components/ShareResult'
 import { fetchDuelForGuesser, fetchThread, submitGuess } from '../lib/duelsApi'
 import { getEraByBand } from '../lib/wordbank'
 import { track } from '../lib/plausible'
@@ -179,6 +180,7 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
           >
             Pick another word
           </button>
+          <ShareResult role="guesser" status={duel.status} guessCount={duel.guess_count} eraName={era?.name} />
         </>
       )}
     </EraSkinProvider>

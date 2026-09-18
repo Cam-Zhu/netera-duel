@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import ShareCard from '../components/ShareCard'
+import ShareResult from '../components/ShareResult'
 import EraSkinProvider from '../components/EraSkinProvider'
 import HeadToHead from '../components/HeadToHead'
 import { fetchDuelForSetter, fetchThread } from '../lib/duelsApi'
@@ -72,6 +73,15 @@ export default function ShareLink({ slug, onHome }) {
       )}
 
       <HeadToHead thread={thread} slug={slug} role="setter" />
+
+      {(duel.status === 'won' || duel.status === 'lost') && (
+        <ShareResult
+          role="setter"
+          status={duel.status}
+          guessCount={duel.guess_count}
+          eraName={duel.hide_era_band ? null : era?.name}
+        />
+      )}
 
       <BackHome onHome={onHome} />
     </EraSkinProvider>

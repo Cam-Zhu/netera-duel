@@ -35,7 +35,9 @@ export async function createDuel({ eraBand, secretWord, hint, hideEraBand, sette
 // claimed by someone else (`taken`), in which case the row comes back with
 // guesses/status/thread nulled — see migration 0007. On a turn-back the row
 // also carries `parent_slug` and `for_name` (the duel it answers and who set
-// that), for the "are you Cam?" gate — migration 0010.
+// that), for the "are you Cam?" gate — migration 0010. `secret_word` is null
+// until the duel is finished and only ever set for the device it belongs to
+// (migration 0011); the server decides that, not this wrapper.
 export async function fetchDuelForGuesser(slug) {
   const { data, error } = await supabase.rpc('get_duel_for_guesser', {
     p_slug: slug,

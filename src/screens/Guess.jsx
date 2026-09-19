@@ -11,8 +11,35 @@ import TurnBackGate from '../components/TurnBackGate'
 import ShareResult from '../components/ShareResult'
 import { fetchDuelForGuesser, fetchDuelSpectator, fetchThread, submitGuess } from '../lib/duelsApi'
 import { isOwnDuel } from '../lib/localIdentity'
-import { getEraByBand } from '../lib/wordbank'
+import { getEraByBand, findWord } from '../lib/wordbank'
 import { track } from '../lib/plausible'
+
+// The bank's meanings are written as bare phrases ("Be right back"); on the
+// finished screen they stand as a sentence of their own, so close them.
+function asSentence(text) {
+  return /[.!?…]$/.test(text) ? text : `${text}.`
+}
+
+// "the word was **sadge**" — the word as stored, lowercase, matching how the
+// bank and the grid spell it. Rendered the same way on won/lost/expired.
+function RevealedWord({ word }) {
+  return <strong>{word}</strong>
+}
+
+// Meaning first, then origin and year quieter on a second line. Omitted
+// entirely when the bank doesn't know the word (see findWord) — no
+// placeholder, no "meaning unavailable".
+function WordMeaning({ entry }) {
+  if (!entry) return null
+  return (
+    <div className="word-meaning">
+      <p className="word-meaning__meaning">{asSentence(entry.meaning)}</p>
+      {(entry.origin || entry.year) && (
+        <p className="word-meaning__origin">{[entry.origin, entry.year].filter(Boolean).join(' · ')}</p>
+      )}
+    </div>
+  )
+}
 
 export default function Guess({ slug, onFinished, onSetOwn }) {
   const [duel, setDuel] = useState(null)
@@ -73,6 +100,26 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
   useEffect(() => {
     if (finished && threadId) fetchThread(threadId).then(setThread)
   }, [finished, threadId])
+
+  // submit_guess returns feedback, not the word, so when the final guess
+  // lands live the row in state still has secret_word null from the pending
+  // fetch. Re-read once; the server now answers with the word (migration
+  // 0011). A reopened finished duel already has it and skips this; so does a
+  // win, where the word is the last guess on the grid.
+  const needsReveal = finished && !duel.taken && duel.status !== 'won' && duel.secret_word == null
+  useEffect(() => {
+    if (!needsReveal) return
+    let cancelled = false
+    fetchDuelForGuesser(slug)
+      .then((d) => {
+        if (cancelled || !d?.secret_word) return
+        setDuel((prev) => (prev ? { ...prev, secret_word: d.secret_word } : prev))
+      })
+      .catch((err) => console.error(err))
+    return () => {
+      cancelled = true
+    }
+  }, [needsReveal, slug])
 
   // One extra round trip, only on the taken path — the guesser RPC nulls
   // everything for a bystander (migration 0007) and is deliberately left
@@ -168,6 +215,12 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
 
   const pastGuesses = duel.guesses.map((g) => ({ guess: g.guess, feedback: g.feedback }))
 
+  // On a win the word is already on the grid, so it's known even before the
+  // reveal refetch lands (or against a DB that predates 0011). Lost/expired
+  // depend on the server; null here means "not yet / not available".
+  const revealedWord =
+    duel.secret_word ?? (duel.status === 'won' ? duel.guesses[duel.guesses.length - 1]?.guess ?? null : null)
+
   async function handleSubmit(e) {
     e.preventDefault()
     if (input.length !== duel.word_length) {
@@ -227,10 +280,28 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
 
       {finished && (
         <>
-          <p>
-            {duel.status === 'won' && `Solved it in ${duel.guess_count}!`}
-            {duel.status === 'lost' && `Out of guesses — the word was hidden, better luck next duel.`}
-          </p>
+          <div className="word-reveal">
+            <p>
+              {duel.status === 'won' && `Solved it in ${duel.guess_count}!`}
+              {duel.status === 'lost' &&
+                (revealedWord ? (
+                  <>
+                    Out of guesses — the word was <RevealedWord word={revealedWord} />.
+                  </>
+                ) : (
+                  'Out of guesses.'
+                ))}
+              {duel.status === 'expired' &&
+                (revealedWord ? (
+                  <>
+                    This duel expired before it was finished — the word was <RevealedWord word={revealedWord} />.
+                  </>
+                ) : (
+                  'This duel expired before it was finished.'
+                ))}
+            </p>
+            <WordMeaning entry={findWord(revealedWord)} />
+          </div>
           <HeadToHead thread={thread} slug={slug} role="guesser" />
           <button
             className="button-primary"

@@ -205,6 +205,32 @@ h1 + p {
   font-style: italic;
 }
 
+/* Finished guesser screen: result line, then the revealed word's meaning
+   directly under it. One block so the shell's 20px gap and the <p> margins
+   don't push the meaning away from the sentence it explains. Meaning reads
+   as body text; origin · year sits under it in the same quiet grey the
+   head-to-head uses for its secondary lines (--h2h-muted). */
+.word-reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.word-reveal p {
+  margin: 0;
+}
+
+.word-meaning {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.word-meaning__origin {
+  font-size: 13px;
+  color: #55504a;
+}
+
 .share-card {
   display: flex;
   flex-direction: column;

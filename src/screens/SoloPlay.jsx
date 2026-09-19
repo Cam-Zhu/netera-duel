@@ -111,10 +111,21 @@ export default function SoloPlay({ onExit }) {
 
           {finished && (
             <>
+              {/* Same reveal as a finished duel (Guess.jsx): bold word, no
+                  quotes. No meaning line here — the hint banner above is
+                  already the meaning in solo. */}
               <p>
                 {status === 'won' && `Solved it in ${guesses.length}!`}
-                {status === 'lost' && `Out of guesses — the word was "${word.word}".`}
-                {status === 'gave_up' && `The word was "${word.word}".`}
+                {status === 'lost' && (
+                  <>
+                    Out of guesses — the word was <strong>{word.word}</strong>.
+                  </>
+                )}
+                {status === 'gave_up' && (
+                  <>
+                    The word was <strong>{word.word}</strong>.
+                  </>
+                )}
               </p>
               <button type="button" className="button-primary" onClick={() => startEra(era.id, 'replay')}>
                 Play again

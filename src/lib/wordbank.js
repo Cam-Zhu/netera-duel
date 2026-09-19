@@ -27,3 +27,14 @@ export function getRandomEra() {
   const eras = getEras()
   return eras[Math.floor(Math.random() * eras.length)]
 }
+
+// Bank entry for a word that came back from the DB, or null. Read-only and
+// deliberately soft: duels created before a bank rename (`tl;dr` → `tldr`,
+// 17 Sep 2026) or on a word since dropped still hold their old secret_word,
+// and the finished screen just shows the word alone for those. Matches on
+// `word` only — `alt` is documentary and nothing else reads it.
+export function findWord(word) {
+  if (typeof word !== 'string' || !word) return null
+  const key = word.toLowerCase()
+  return data.words.find((w) => w.word === key) ?? null
+}

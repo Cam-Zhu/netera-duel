@@ -7,8 +7,10 @@ import HeadToHead from '../components/HeadToHead'
 import DuelTaken from '../components/DuelTaken'
 import DuelSpectator from '../components/DuelSpectator'
 import DuelNotice from '../components/DuelNotice'
+import TurnBackGate from '../components/TurnBackGate'
 import ShareResult from '../components/ShareResult'
 import { fetchDuelForGuesser, fetchDuelSpectator, fetchThread, submitGuess } from '../lib/duelsApi'
+import { isOwnDuel } from '../lib/localIdentity'
 import { getEraByBand } from '../lib/wordbank'
 import { track } from '../lib/plausible'
 
@@ -28,6 +30,9 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
   // stands in, so a spectator RPC that's down or not yet migrated degrades
   // to the old dead end rather than an error.
   const [spectator, setSpectator] = useState(undefined)
+  // Whether the "are you Cam?" question on an unplayed turn-back has been
+  // answered yes. Session-local on purpose: it's a nudge, not a claim.
+  const [gatePassed, setGatePassed] = useState(false)
   // How the initial fetch went. 'not_found' is the RPC answering with no row
   // (a mistyped, cut-off or deleted link); 'error' is it not answering at all
   // (offline, or the client and DB briefly disagreeing on a function
@@ -138,6 +143,24 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
         setterName={duel.setter_name}
         eraId={era?.id}
         stage={takenStage}
+        onSetOwn={onSetOwn}
+      />
+    )
+  }
+
+  // A turn-back nobody has guessed on yet is meant for whoever set its
+  // parent. If this browser holds that parent's setter_token, that's them —
+  // straight to the grid. Otherwise ask first (see TurnBackGate). Once a
+  // guess is in, the duel is claimed by this device and the question is
+  // moot, so a reload mid-game never re-asks.
+  const unplayedTurnBack = !!duel.parent_slug && duel.status === 'pending' && duel.guesses.length === 0
+  if (unplayedTurnBack && !gatePassed && !isOwnDuel(duel.parent_slug)) {
+    return (
+      <TurnBackGate
+        forName={duel.for_name}
+        setterName={duel.setter_name}
+        eraId={era?.id}
+        onYes={() => setGatePassed(true)}
         onSetOwn={onSetOwn}
       />
     )

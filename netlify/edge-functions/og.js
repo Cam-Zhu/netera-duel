@@ -65,6 +65,20 @@ function cleanName(raw) {
   return trimmed ? escapeHtml(trimmed) : null
 }
 
+// Title for a finished duel's card. `count` comes from get_duel_og's
+// guess_count (migration 0009); if the edge function is ever deployed ahead
+// of that migration it's undefined, and the title just drops the number
+// rather than reading "solved in undefined guesses".
+function resultTitle(name, status, count) {
+  const whose = name ? `${name}'s word` : 'A word duel'
+  if (status === 'won') {
+    const guesses = Number.isInteger(count) ? ` in ${count} ${count === 1 ? 'guess' : 'guesses'}` : ''
+    return `${whose} — solved${guesses}`
+  }
+  if (status === 'lost') return `${whose} — not solved in six`
+  return `${whose} — never finished`
+}
+
 // Rewrite the content="" of whichever <meta> carries the given key. Matching the
 // whole tag first, then the content attribute inside it, keeps this working
 // regardless of attribute order — a build step that reshuffles them shouldn't
@@ -212,18 +226,29 @@ export default async (request, context) => {
       // pages that happen to return 200.
       if (duel === null) status = 404
 
-      // A finished duel (won/lost/expired) keeps the generic card: there's
-      // nothing left to challenge anyone to, and re-shares of an old link
-      // shouldn't read as a fresh invitation.
-      if (duel && duel.status === 'pending') {
+      // A pending duel unfurls as a challenge; a finished one (won/lost/
+      // expired) as a result — the link people post from the result share
+      // leads to the spectator view (migration 0009), so it should read as
+      // "look what happened" rather than a fresh invitation, and not as the
+      // bland site-wide card either. Never the hint or the word in either.
+      if (duel) {
         const era = ERAS.find((e) => e.band === duel.era_band) ?? null
         const showEra = Boolean(era) && !duel.hide_era_band
         const name = cleanName(duel.setter_name)
+        const pending = duel.status === 'pending'
 
-        const title = name ? `${name}'s challenged you to a word duel` : GENERIC_TITLE
-        const description = showEra
-          ? `${era.name} (${era.range}). Six guesses. Can you get it?`
-          : GENERIC_DESCRIPTION
+        const title = pending
+          ? name
+            ? `${name}'s challenged you to a word duel`
+            : GENERIC_TITLE
+          : resultTitle(name, duel.status, duel.guess_count)
+        const description = pending
+          ? showEra
+            ? `${era.name} (${era.range}). Six guesses. Can you get it?`
+            : GENERIC_DESCRIPTION
+          : showEra
+            ? `${era.name} (${era.range}). Think you'd do better?`
+            : "Think you'd do better?"
         const image = await pickImage(url.origin, era, duel.hide_era_band)
 
         html = setTitle(html, title)

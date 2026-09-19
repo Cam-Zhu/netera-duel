@@ -43,6 +43,15 @@ export async function fetchDuelForGuesser(slug) {
   return data[0] ?? null
 }
 
+// The read-only view for anyone the duel is `taken` for: colours, count and
+// outcome of a finished duel, or just the banner while it's pending. Never
+// the word or the guessed strings — the server strips them (migration 0009).
+export async function fetchDuelSpectator(slug) {
+  const { data, error } = await supabase.rpc('get_duel_spectator', { p_slug: slug })
+  if (error) throw error
+  return data[0] ?? null
+}
+
 export async function fetchDuelForSetter(setterToken) {
   const { data, error } = await supabase.rpc('get_duel_for_setter', { p_setter_token: setterToken })
   if (error) throw error

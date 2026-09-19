@@ -2,6 +2,9 @@ import Tile from './Tile'
 import { buildBlankRow } from '../lib/gridLogic'
 
 // pastGuesses: [{ guess: 'rizz', feedback: ['green','grey',...] }]
+//   `guess` is optional: the spectator view (DuelSpectator) gets colours
+//   only from the server, so its rows carry just `feedback` and render as
+//   blank coloured tiles — same grid, no letters to leak.
 // wordLength: used to size blank rows so the shape of the answer is visible
 // before any guess is made (per claude.md word-length convention).
 export default function GuessGrid({ wordLength, pastGuesses, maxGuesses = 6, currentInput = '' }) {
@@ -9,7 +12,7 @@ export default function GuessGrid({ wordLength, pastGuesses, maxGuesses = 6, cur
 
   for (const past of pastGuesses) {
     rows.push(
-      past.feedback.map((fb, i) => ({ letter: past.guess[i], feedback: fb }))
+      past.feedback.map((fb, i) => ({ letter: past.guess?.[i] ?? '', feedback: fb }))
     )
   }
 

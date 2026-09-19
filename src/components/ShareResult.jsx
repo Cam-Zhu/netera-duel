@@ -4,13 +4,15 @@ import { track } from '../lib/plausible'
 const MAX_GUESSES = 6
 
 // Spoiler-free result for a group chat: the pip row as emoji, the era if it
-// was shown, and the site — never the word, the hint or the /d/ link (the
-// duel is claimed, so that link is a dead end for a third person). Same
-// copy/share mechanics as ShareCard.
-export default function ShareResult({ role, status, guessCount, eraName }) {
+// was shown, and the duel's own link — never the word or the hint. The link
+// is safe to post because a third person opening a claimed duel gets the
+// spectator view (colours only, migration 0009), and the /d/* edge function
+// unfurls a finished duel as a result card. Same copy/share mechanics as
+// ShareCard.
+export default function ShareResult({ role, status, guessCount, eraName, slug }) {
   const [copied, setCopied] = useState(false)
   const [sharing, setSharing] = useState(false)
-  const text = resultText({ role, status, guessCount, eraName })
+  const text = resultText({ role, status, guessCount, eraName, slug })
 
   async function copyResult() {
     await navigator.clipboard.writeText(text)
@@ -51,7 +53,8 @@ export default function ShareResult({ role, status, guessCount, eraName }) {
 // Circles rather than squares so it reads as the tally's pip row, not the
 // grid's per-letter feedback. A loss is five filled and a crossed sixth,
 // matching the pips on screen.
-export function resultText({ role, status, guessCount, eraName }) {
+// Uses window.location.origin, so a preview deploy shares its own host.
+export function resultText({ role, status, guessCount, eraName, slug }) {
   const lost = status === 'lost'
   const filled = lost ? MAX_GUESSES - 1 : guessCount
   const pips = '🟢'.repeat(filled) + (lost ? '❌' : '⚪'.repeat(MAX_GUESSES - filled))
@@ -61,5 +64,6 @@ export function resultText({ role, status, guessCount, eraName }) {
   else outcome = lost ? "didn't get it" : `solved in ${guessCount}`
 
   const title = eraName ? `Netera Duel · ${eraName}` : 'Netera Duel'
-  return `${title}\n${pips}  ${outcome}\n${window.location.host}`
+  const link = slug ? `${window.location.origin}/d/${slug}` : window.location.host
+  return `${title}\n${pips}  ${outcome}\n${link}`
 }

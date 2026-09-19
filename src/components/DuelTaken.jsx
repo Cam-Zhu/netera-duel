@@ -8,6 +8,11 @@ import { track } from '../lib/plausible'
 // and no way into the thread: the one exit is setting a fresh word of their
 // own, so a bounced visitor becomes a new setter rather than a dead end.
 //
+// Since the spectator view (DuelSpectator, migration 0009) this is the
+// fallback for when get_duel_spectator fails or returns nothing — Guess.jsx
+// tries that first. The event names stay as they were so Plausible keeps
+// the pre-spectator baseline to compare against.
+//
 // `stage` says how they got here — 'open' (already taken when the link was
 // opened) or 'guess' (they typed a guess but someone beat them to it) — for
 // analytics only.

@@ -80,6 +80,7 @@ export default function ShareLink({ slug, onHome }) {
           status={duel.status}
           guessCount={duel.guess_count}
           eraName={duel.hide_era_band ? null : era?.name}
+          slug={slug}
         />
       )}
 

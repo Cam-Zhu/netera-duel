@@ -5,9 +5,10 @@ import EraSkinProvider from '../components/EraSkinProvider'
 import HowToPlay from '../components/HowToPlay'
 import HeadToHead from '../components/HeadToHead'
 import DuelTaken from '../components/DuelTaken'
+import DuelSpectator from '../components/DuelSpectator'
 import DuelNotice from '../components/DuelNotice'
 import ShareResult from '../components/ShareResult'
-import { fetchDuelForGuesser, fetchThread, submitGuess } from '../lib/duelsApi'
+import { fetchDuelForGuesser, fetchDuelSpectator, fetchThread, submitGuess } from '../lib/duelsApi'
 import { getEraByBand } from '../lib/wordbank'
 import { track } from '../lib/plausible'
 
@@ -21,6 +22,12 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
   // taken on arrival, 'guess' if someone beat this device to the first guess
   // while the grid was on screen.
   const [takenStage, setTakenStage] = useState(null)
+  // The read-only row for a taken duel, fetched once takenStage is set:
+  // undefined while in flight, the get_duel_spectator row on success, null
+  // if it failed or found nothing — in which case the plain taken screen
+  // stands in, so a spectator RPC that's down or not yet migrated degrades
+  // to the old dead end rather than an error.
+  const [spectator, setSpectator] = useState(undefined)
   // How the initial fetch went. 'not_found' is the RPC answering with no row
   // (a mistyped, cut-off or deleted link); 'error' is it not answering at all
   // (offline, or the client and DB briefly disagreeing on a function
@@ -62,6 +69,26 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
     if (finished && threadId) fetchThread(threadId).then(setThread)
   }, [finished, threadId])
 
+  // One extra round trip, only on the taken path — the guesser RPC nulls
+  // everything for a bystander (migration 0007) and is deliberately left
+  // that way; what a spectator may see comes from its own function (0009).
+  useEffect(() => {
+    if (!takenStage) return
+    let cancelled = false
+    setSpectator(undefined)
+    fetchDuelSpectator(slug)
+      .then((s) => {
+        if (!cancelled) setSpectator(s)
+      })
+      .catch((err) => {
+        console.error(err)
+        if (!cancelled) setSpectator(null)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [takenStage, slug])
+
   if (loadState === 'not_found') {
     return (
       <DuelNotice
@@ -95,6 +122,17 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
   const era = duel.hide_era_band ? null : getEraByBand(duel.era_band)
 
   if (takenStage) {
+    if (spectator === undefined) return <p>Loading…</p>
+    if (spectator) {
+      return (
+        <DuelSpectator
+          duel={spectator}
+          era={spectator.hide_era_band ? null : getEraByBand(spectator.era_band)}
+          stage={takenStage}
+          onSetOwn={onSetOwn}
+        />
+      )
+    }
     return (
       <DuelTaken
         setterName={duel.setter_name}
@@ -180,7 +218,7 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
           >
             Pick another word
           </button>
-          <ShareResult role="guesser" status={duel.status} guessCount={duel.guess_count} eraName={era?.name} />
+          <ShareResult role="guesser" status={duel.status} guessCount={duel.guess_count} eraName={era?.name} slug={slug} />
         </>
       )}
     </EraSkinProvider>

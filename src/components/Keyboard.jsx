@@ -23,7 +23,14 @@ const ROWS = [
 const LABELS = { enter: 'Enter', back: '⌫' }
 const ARIA = { enter: 'Submit guess', back: 'Delete letter' }
 
-export default function Keyboard({ keyStates = {}, onKey, onEnter, onBackspace, disabled = false }) {
+export default function Keyboard({
+  keyStates = {},
+  onKey,
+  onEnter,
+  onBackspace,
+  disabled = false,
+  rejection = null,
+}) {
   function press(key) {
     if (disabled) return
     if (key === 'enter') onEnter()
@@ -37,11 +44,25 @@ export default function Keyboard({ keyStates = {}, onKey, onEnter, onBackspace, 
         <div className="keyboard__row" key={r}>
           {row.map((key) => {
             const wide = key === 'enter' || key === 'back'
+            const dead = !wide && keyStates[key] === 'grey'
+            const shaking = rejection?.key === key
             return (
               <button
-                key={key}
+                // Remounting the rejected key restarts its shake, so pressing
+                // the same dead key twice in a row animates both times.
+                key={shaking ? `${key}-${rejection.nonce}` : key}
                 type="button"
-                className={`key ${wide ? 'key--wide' : keyStateToClass(keyStates[key])}`}
+                className={[
+                  'key',
+                  wide ? 'key--wide' : keyStateToClass(keyStates[key]),
+                  dead ? 'key--dead' : '',
+                  shaking ? 'key--rejected' : '',
+                ].filter(Boolean).join(' ')}
+                // aria-disabled, not disabled: a disabled button fires no
+                // click at all, so a tap would be met with silence — the
+                // "is this thing broken?" failure. Enabled, the press still
+                // reaches onKey, which rejects it visibly.
+                aria-disabled={dead || undefined}
                 aria-label={ARIA[key]}
                 // Keys never take focus. Otherwise the last-tapped key stays
                 // focused and a physical Enter both activates it and fires

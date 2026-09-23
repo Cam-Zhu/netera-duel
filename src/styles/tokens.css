@@ -701,3 +701,41 @@ input[type="text"] {
 .keyboard[data-disabled='true'] .key {
   opacity: 0.5;
 }
+
+/* Ruled out and refused. The key stays clickable (see Keyboard.jsx) so the
+   press has somewhere to land; this is what tells the player it went
+   nowhere. */
+.key--dead {
+  opacity: 0.55;
+}
+
+.key--rejected {
+  animation: key-shake 300ms ease-in-out;
+}
+
+@keyframes key-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+/* The line under the grid naming the refused key. Quieter than .error-text:
+   nothing has gone wrong, the player just aimed at a letter they'd already
+   ruled out. */
+.key-rejected-note {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.3;
+  /* Holds its line whether or not there's anything in it, so the keypad
+     never moves under a thumb that's mid-press. */
+  min-height: 1.3em;
+  color: #55504a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .key--rejected {
+    animation: none;
+  }
+}

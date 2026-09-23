@@ -27,10 +27,11 @@ export default function SoloPlay({ onExit }) {
   const finished = status !== 'pending'
   const keyStates = deriveKeyStates(guesses)
 
-  const { input, setInput, pressKey, pressBackspace, pressEnter } = useGuessInput({
+  const { input, setInput, pressKey, pressBackspace, pressEnter, rejection } = useGuessInput({
     wordLength: word?.word.length ?? 0,
     active: !!word && !finished,
     onSubmit: handleSubmit,
+    keyStates,
   })
 
   function startEra(id, method) {
@@ -95,11 +96,18 @@ export default function SoloPlay({ onExit }) {
           {!finished && (
             <>
               {error && <p className="error-text">{error}</p>}
+              {/* Always rendered, even when empty: appearing on demand would
+                  shove the keypad down mid-tap. aria-live carries it to
+                  screen readers, which get nothing from the shake. */}
+              <p className="key-rejected-note" aria-live="polite">
+                {rejection ? `You've ruled out ${rejection.key.toUpperCase()}.` : ''}
+              </p>
               <Keyboard
                 keyStates={keyStates}
                 onKey={pressKey}
                 onEnter={pressEnter}
                 onBackspace={pressBackspace}
+                rejection={rejection}
               />
               <button
                 type="button"

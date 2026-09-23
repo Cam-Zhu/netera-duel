@@ -12,22 +12,45 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 // the hyphen, covering "67", "l8r" and "binge-watch".
 const TYPEABLE = /^[a-z0-9-]$/
 
-export function useGuessInput({ wordLength, active, onSubmit }) {
+// How long the "you've ruled that out" line and its shake stay up.
+const REJECT_MS = 1200
+
+export function useGuessInput({ wordLength, active, onSubmit, keyStates = {} }) {
   const [input, setInput] = useState('')
+  // The last blocked press, or null. The nonce lets the same key be
+  // rejected twice in a row and still replay its shake.
+  const [rejection, setRejection] = useState(null)
+  const rejectTimer = useRef(null)
 
   // The window listener below is bound once per handler identity, not per
   // keystroke, so it reads everything changeable through this ref rather
   // than closing over a render's values and going stale.
   const latest = useRef(null)
-  latest.current = { input, wordLength, active, onSubmit }
+  latest.current = { input, wordLength, active, onSubmit, keyStates }
+
+  const reject = useCallback((char) => {
+    setRejection((prev) => ({ key: char, nonce: (prev?.nonce ?? 0) + 1 }))
+    clearTimeout(rejectTimer.current)
+    rejectTimer.current = setTimeout(() => setRejection(null), REJECT_MS)
+  }, [])
 
   const pressKey = useCallback((char) => {
-    const { active, wordLength } = latest.current
+    const { active, wordLength, keyStates } = latest.current
     if (!active) return
     const c = char.toLowerCase()
     if (!TYPEABLE.test(c)) return
+
+    // Ruled out: every occurrence of this character, in every guess so far,
+    // came back grey — which deriveKeyStates only ever concludes when the
+    // character genuinely isn't in the word. So refusing it can never block
+    // the answer, only a guess that was already certain to be wrong.
+    if (keyStates[c] === 'grey') {
+      reject(c)
+      return
+    }
+
     setInput((prev) => (prev.length >= wordLength ? prev : prev + c))
-  }, [])
+  }, [reject])
 
   const pressBackspace = useCallback(() => {
     if (!latest.current.active) return
@@ -68,5 +91,7 @@ export function useGuessInput({ wordLength, active, onSubmit }) {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [pressKey, pressBackspace, pressEnter])
 
-  return { input, setInput, pressKey, pressBackspace, pressEnter }
+  useEffect(() => () => clearTimeout(rejectTimer.current), [])
+
+  return { input, setInput, pressKey, pressBackspace, pressEnter, rejection }
 }

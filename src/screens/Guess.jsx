@@ -152,7 +152,7 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
   const gateBlocking = unplayedTurnBack && !gatePassed && !isOwnDuel(duel.parent_slug)
   const keyStates = deriveKeyStates(duel?.guesses ?? [])
 
-  const { input, setInput, pressKey, pressBackspace, pressEnter, rejection } = useGuessInput({
+  const { input, setInput, pressKey, pressBackspace, pressEnter, rejection, press, shortfall } = useGuessInput({
     wordLength: duel?.word_length ?? 0,
     active: !!duel && !finished && !takenStage && !gateBlocking && !submitting,
     onSubmit: handleSubmit,
@@ -240,10 +240,6 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
 
   async function handleSubmit(value) {
     if (!duel) return
-    if (value.length !== duel.word_length) {
-      setError(`Word is ${duel.word_length} characters long.`)
-      return
-    }
     setSubmitting(true)
     setError(null)
     try {
@@ -277,15 +273,18 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
         wordLength={duel.word_length}
         pastGuesses={pastGuesses}
         currentInput={finished ? '' : input}
+        shake={shortfall}
       />
 
       {!finished && (
         <>
           {error && <p className="error-text">{error}</p>}
           {/* Always rendered, even when empty: appearing on demand would
-              shove the keypad down mid-tap. */}
+              shove the keypad down mid-tap. Both messages share the one
+              reserved line — only one can be true of a given press. */}
           <p className="key-rejected-note" aria-live="polite">
-            {rejection ? `You've ruled out ${rejection.key.toUpperCase()}.` : ''}
+            {rejection && `You've ruled out ${rejection.key.toUpperCase()}.`}
+            {!rejection && shortfall && `Word is ${duel.word_length} characters long.`}
           </p>
           <Keyboard
             keyStates={keyStates}
@@ -294,6 +293,7 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
             onBackspace={pressBackspace}
             disabled={submitting}
             rejection={rejection}
+            press={press}
           />
         </>
       )}

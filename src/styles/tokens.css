@@ -115,6 +115,26 @@ h1 + p {
   gap: 6px;
 }
 
+/* The letter landing in the tile. Applies to every filled tile in the row
+   being typed, but only plays on the one that just mounted — which, given how
+   GuessGrid keys them, is the tile that just took a letter. Overshoots so it
+   reads as landing rather than fading up. */
+.guess-row--typed .tile-typed {
+  animation: tile-pop 130ms ease-out;
+}
+
+@keyframes tile-pop {
+  from {
+    transform: scale(0.82);
+  }
+  60% {
+    transform: scale(1.06);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
 .guess-grid {
   display: flex;
   flex-direction: column;
@@ -721,6 +741,30 @@ input[type="text"] {
   80% { transform: translateX(2px); }
 }
 
+/* Pressing a key. :active covers the moment a finger is down — it lands on
+   touchstart, ahead of the click — and the pop then carries on from the same
+   0.94 it leaves off at, so a tap reads as one movement. A press from a
+   physical keyboard never touches :active and gets the pop alone. */
+.key:active {
+  transform: scale(0.94);
+}
+
+.key--pressed {
+  animation: key-press 140ms ease-out;
+}
+
+@keyframes key-press {
+  from {
+    transform: scale(0.94);
+  }
+  60% {
+    transform: scale(1.05);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
 /* The line under the grid naming the refused key. Quieter than .error-text:
    nothing has gone wrong, the player just aimed at a letter they'd already
    ruled out. */
@@ -735,7 +779,13 @@ input[type="text"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .key--rejected {
+  .key--rejected,
+  .key--pressed,
+  .guess-row--typed .tile-typed {
     animation: none;
+  }
+
+  .key:active {
+    transform: none;
   }
 }

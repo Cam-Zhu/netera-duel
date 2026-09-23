@@ -20,14 +20,13 @@ export default function SoloPlay({ onExit }) {
   const [eraId, setEraId] = useState(null)
   const [word, setWord] = useState(null)
   const [guesses, setGuesses] = useState([])
-  const [error, setError] = useState(null)
   const [status, setStatus] = useState('pending')
 
   const era = eraId ? getEraById(eraId) : null
   const finished = status !== 'pending'
   const keyStates = deriveKeyStates(guesses)
 
-  const { input, setInput, pressKey, pressBackspace, pressEnter, rejection } = useGuessInput({
+  const { input, setInput, pressKey, pressBackspace, pressEnter, rejection, press, shortfall } = useGuessInput({
     wordLength: word?.word.length ?? 0,
     active: !!word && !finished,
     onSubmit: handleSubmit,
@@ -39,18 +38,12 @@ export default function SoloPlay({ onExit }) {
     setWord(getRandomWord(id))
     setGuesses([])
     setInput('')
-    setError(null)
     setStatus('pending')
     track('Solo Game Started', { era: getEraById(id).name, method })
   }
 
   function handleSubmit(value) {
     if (!word) return
-    if (value.length !== word.word.length) {
-      setError(`Word is ${word.word.length} characters long.`)
-      return
-    }
-    setError(null)
 
     const feedback = computeFeedback(word.word, value)
     const nextGuesses = [...guesses, { guess: value.toLowerCase(), feedback }]
@@ -91,16 +84,19 @@ export default function SoloPlay({ onExit }) {
             wordLength={word.word.length}
             pastGuesses={guesses}
             currentInput={finished ? '' : input}
+            shake={shortfall}
           />
 
           {!finished && (
             <>
-              {error && <p className="error-text">{error}</p>}
               {/* Always rendered, even when empty: appearing on demand would
                   shove the keypad down mid-tap. aria-live carries it to
-                  screen readers, which get nothing from the shake. */}
+                  screen readers, which get nothing from the shake. Both
+                  messages share the one reserved line — only one of them can
+                  be true of a given press. */}
               <p className="key-rejected-note" aria-live="polite">
-                {rejection ? `You've ruled out ${rejection.key.toUpperCase()}.` : ''}
+                {rejection && `You've ruled out ${rejection.key.toUpperCase()}.`}
+                {!rejection && shortfall && `Word is ${word.word.length} characters long.`}
               </p>
               <Keyboard
                 keyStates={keyStates}
@@ -108,6 +104,7 @@ export default function SoloPlay({ onExit }) {
                 onEnter={pressEnter}
                 onBackspace={pressBackspace}
                 rejection={rejection}
+                press={press}
               />
               <button
                 type="button"

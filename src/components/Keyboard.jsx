@@ -30,8 +30,9 @@ export default function Keyboard({
   onBackspace,
   disabled = false,
   rejection = null,
+  press = null,
 }) {
-  function press(key) {
+  function handlePress(key) {
     if (disabled) return
     if (key === 'enter') onEnter()
     else if (key === 'back') onBackspace()
@@ -46,17 +47,22 @@ export default function Keyboard({
             const wide = key === 'enter' || key === 'back'
             const dead = !wide && keyStates[key] === 'grey'
             const shaking = rejection?.key === key
+            const pressed = !shaking && press?.key === key
             return (
               <button
-                // Remounting the rejected key restarts its shake, so pressing
-                // the same dead key twice in a row animates both times.
-                key={shaking ? `${key}-${rejection.nonce}` : key}
+                // Remounting a key restarts its animation, so pressing the
+                // same key twice in a row animates both times. Same trick
+                // serves the rejection shake and the press pop; a key is only
+                // ever doing one of the two (see useGuessInput), so it takes
+                // one nonce or the other, never both.
+                key={shaking ? `${key}-r${rejection.nonce}` : pressed ? `${key}-p${press.nonce}` : key}
                 type="button"
                 className={[
                   'key',
                   wide ? 'key--wide' : keyStateToClass(keyStates[key]),
                   dead ? 'key--dead' : '',
                   shaking ? 'key--rejected' : '',
+                  pressed ? 'key--pressed' : '',
                 ].filter(Boolean).join(' ')}
                 // aria-disabled, not disabled: a disabled button fires no
                 // click at all, so a tap would be met with silence — the
@@ -69,7 +75,7 @@ export default function Keyboard({
                 // the window listener in useGuessInput — one press, two
                 // guesses. Touch still produces a click after this.
                 onMouseDown={(e) => e.preventDefault()}
-                onClick={() => press(key)}
+                onClick={() => handlePress(key)}
               >
                 {LABELS[key] ?? key.toUpperCase()}
               </button>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import HintBanner from '../components/HintBanner'
 import GuessGrid from '../components/GuessGrid'
+import Keyboard from '../components/Keyboard'
 import EraSkinProvider from '../components/EraSkinProvider'
 import HowToPlay from '../components/HowToPlay'
 import HeadToHead from '../components/HeadToHead'
@@ -12,6 +13,8 @@ import ShareResult from '../components/ShareResult'
 import { fetchDuelForGuesser, fetchDuelSpectator, fetchThread, submitGuess } from '../lib/duelsApi'
 import { isOwnDuel } from '../lib/localIdentity'
 import { getEraByBand, findWord } from '../lib/wordbank'
+import { deriveKeyStates } from '../lib/keyboardLogic'
+import { useGuessInput } from '../lib/useGuessInput'
 import { track } from '../lib/plausible'
 
 // The bank's meanings are written as bare phrases ("Be right back"); on the
@@ -43,7 +46,6 @@ function WordMeaning({ entry }) {
 
 export default function Guess({ slug, onFinished, onSetOwn }) {
   const [duel, setDuel] = useState(null)
-  const [input, setInput] = useState('')
   const [error, setError] = useState(null)
   const [submitting, setSubmitting] = useState(false)
   const [thread, setThread] = useState(null)
@@ -141,6 +143,22 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
     }
   }, [takenStage, slug])
 
+  // These three are computed here rather than at their point of use because
+  // useGuessInput is a hook and must run before the early returns below —
+  // and it must not be typing into a grid that's hidden behind the gate, the
+  // taken screen or a loading state.
+  const unplayedTurnBack =
+    !!duel && !!duel.parent_slug && duel.status === 'pending' && duel.guesses.length === 0
+  const gateBlocking = unplayedTurnBack && !gatePassed && !isOwnDuel(duel.parent_slug)
+  const keyStates = deriveKeyStates(duel?.guesses ?? [])
+
+  const { input, setInput, pressKey, pressBackspace, pressEnter, rejection } = useGuessInput({
+    wordLength: duel?.word_length ?? 0,
+    active: !!duel && !finished && !takenStage && !gateBlocking && !submitting,
+    onSubmit: handleSubmit,
+    keyStates,
+  })
+
   if (loadState === 'not_found') {
     return (
       <DuelNotice
@@ -200,8 +218,7 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
   // straight to the grid. Otherwise ask first (see TurnBackGate). Once a
   // guess is in, the duel is claimed by this device and the question is
   // moot, so a reload mid-game never re-asks.
-  const unplayedTurnBack = !!duel.parent_slug && duel.status === 'pending' && duel.guesses.length === 0
-  if (unplayedTurnBack && !gatePassed && !isOwnDuel(duel.parent_slug)) {
+  if (gateBlocking) {
     return (
       <TurnBackGate
         forName={duel.for_name}
@@ -221,19 +238,19 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
   const revealedWord =
     duel.secret_word ?? (duel.status === 'won' ? duel.guesses[duel.guesses.length - 1]?.guess ?? null : null)
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    if (input.length !== duel.word_length) {
+  async function handleSubmit(value) {
+    if (!duel) return
+    if (value.length !== duel.word_length) {
       setError(`Word is ${duel.word_length} characters long.`)
       return
     }
     setSubmitting(true)
     setError(null)
     try {
-      const result = await submitGuess(slug, input)
+      const result = await submitGuess(slug, value)
       setDuel((prev) => ({
         ...prev,
-        guesses: [...prev.guesses, { guess: input.toLowerCase(), feedback: result.feedback }],
+        guesses: [...prev.guesses, { guess: value.toLowerCase(), feedback: result.feedback }],
         status: result.status,
         guess_count: result.guess_count,
       }))
@@ -263,19 +280,22 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
       />
 
       {!finished && (
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            value={input}
-            maxLength={duel.word_length}
-            onChange={(e) => setInput(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''))}
-            autoCapitalize="characters"
-          />
+        <>
           {error && <p className="error-text">{error}</p>}
-          <button type="submit" className="button-primary" disabled={submitting}>
-            Guess
-          </button>
-        </form>
+          {/* Always rendered, even when empty: appearing on demand would
+              shove the keypad down mid-tap. */}
+          <p className="key-rejected-note" aria-live="polite">
+            {rejection ? `You've ruled out ${rejection.key.toUpperCase()}.` : ''}
+          </p>
+          <Keyboard
+            keyStates={keyStates}
+            onKey={pressKey}
+            onEnter={pressEnter}
+            onBackspace={pressBackspace}
+            disabled={submitting}
+            rejection={rejection}
+          />
+        </>
       )}
 
       {finished && (

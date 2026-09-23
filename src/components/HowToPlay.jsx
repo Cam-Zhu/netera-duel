@@ -21,7 +21,8 @@ function GuesserSteps() {
   return (
     <ol>
       <li>A friend has picked a word from an internet era for you to guess. The era and their hint (if they left one) are shown above the grid.</li>
-      <li>Type a guess that fills the row, then tap "Guess". You have 6 goes. Letters turn green if they are correct and in the right place, yellow if in the word but in the wrong place, and grey if not in the word at all.</li>
+      <li>Tap out a guess on the keypad to fill the row, then hit Enter. You have 6 goes. Letters turn green if they are correct and in the right place, yellow if in the word but in the wrong place, and grey if not in the word at all.</li>
+      <li>Keys grey out as you rule letters out, and stop working — if a letter isn't in the word, you can't spend a guess on it twice.</li>
       <li>Once you've finished, tap "Pick another word" to set a word of your own for them to guess. That completes the duel.</li>
       <li>When both of you have played, you'll each see the head-to-head: who solved it in fewer guesses, round by round, and the running score.</li>
     </ol>

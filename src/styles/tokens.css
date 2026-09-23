@@ -637,3 +637,67 @@ input[type="text"] {
     animation: none;
   }
 }
+
+/* On-screen keypad (Keyboard.jsx). Keys are sized to the row rather than to
+   the 44px tiles: a row is always 10 keys wide whatever the word is, and at
+   phone width inside .app-shell that lands around 29px each — narrow, but
+   the height carries the touch target, and the alternative is dropping the
+   digit row the bank needs. Feedback colours reuse the tile tokens so a key
+   and its tile can never drift apart. */
+.keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.keyboard__row {
+  display: flex;
+  gap: 4px;
+}
+
+.key {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 48px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: 1px solid #c9c3b8;
+  border-radius: 6px;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 15px;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.key--wide {
+  flex: 1.6 1 0;
+  font-size: 12px;
+}
+
+.key--green {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.key--yellow {
+  background: var(--yellow);
+  border-color: var(--yellow);
+  color: #fff;
+}
+
+/* Ruled out. Still pressable for now — it types, and costs a guess. */
+.key--grey {
+  background: var(--grey);
+  border-color: var(--grey);
+  color: #fff;
+  opacity: 0.75;
+}
+
+.keyboard[data-disabled='true'] .key {
+  opacity: 0.5;
+}

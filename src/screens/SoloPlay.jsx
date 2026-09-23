@@ -4,8 +4,11 @@ import EraSkinProvider from '../components/EraSkinProvider'
 import HowToPlay from '../components/HowToPlay'
 import HintBanner from '../components/HintBanner'
 import GuessGrid from '../components/GuessGrid'
+import Keyboard from '../components/Keyboard'
 import { getEraById, getRandomWord, getRandomEra } from '../lib/wordbank'
 import { computeFeedback } from '../lib/gridLogic'
+import { deriveKeyStates } from '../lib/keyboardLogic'
+import { useGuessInput } from '../lib/useGuessInput'
 import { track } from '../lib/plausible'
 
 const MAX_GUESSES = 6
@@ -17,12 +20,18 @@ export default function SoloPlay({ onExit }) {
   const [eraId, setEraId] = useState(null)
   const [word, setWord] = useState(null)
   const [guesses, setGuesses] = useState([])
-  const [input, setInput] = useState('')
   const [error, setError] = useState(null)
   const [status, setStatus] = useState('pending')
 
   const era = eraId ? getEraById(eraId) : null
   const finished = status !== 'pending'
+  const keyStates = deriveKeyStates(guesses)
+
+  const { input, setInput, pressKey, pressBackspace, pressEnter } = useGuessInput({
+    wordLength: word?.word.length ?? 0,
+    active: !!word && !finished,
+    onSubmit: handleSubmit,
+  })
 
   function startEra(id, method) {
     setEraId(id)
@@ -34,20 +43,20 @@ export default function SoloPlay({ onExit }) {
     track('Solo Game Started', { era: getEraById(id).name, method })
   }
 
-  function handleSubmit(e) {
-    e.preventDefault()
-    if (input.length !== word.word.length) {
+  function handleSubmit(value) {
+    if (!word) return
+    if (value.length !== word.word.length) {
       setError(`Word is ${word.word.length} characters long.`)
       return
     }
     setError(null)
 
-    const feedback = computeFeedback(word.word, input)
-    const nextGuesses = [...guesses, { guess: input.toLowerCase(), feedback }]
+    const feedback = computeFeedback(word.word, value)
+    const nextGuesses = [...guesses, { guess: value.toLowerCase(), feedback }]
     setGuesses(nextGuesses)
     setInput('')
 
-    const won = input.toLowerCase() === word.word.toLowerCase()
+    const won = value.toLowerCase() === word.word.toLowerCase()
     const nextStatus = won ? 'won' : nextGuesses.length >= MAX_GUESSES ? 'lost' : 'pending'
     setStatus(nextStatus)
     if (nextStatus !== 'pending') {
@@ -84,18 +93,14 @@ export default function SoloPlay({ onExit }) {
           />
 
           {!finished && (
-            <form onSubmit={handleSubmit}>
-              <input
-                type="text"
-                value={input}
-                maxLength={word.word.length}
-                onChange={(e) => setInput(e.target.value.replace(/[^a-zA-Z0-9-]/g, ''))}
-                autoCapitalize="characters"
-              />
+            <>
               {error && <p className="error-text">{error}</p>}
-              <button type="submit" className="button-primary">
-                Guess
-              </button>
+              <Keyboard
+                keyStates={keyStates}
+                onKey={pressKey}
+                onEnter={pressEnter}
+                onBackspace={pressBackspace}
+              />
               <button
                 type="button"
                 className="button-secondary"
@@ -106,7 +111,7 @@ export default function SoloPlay({ onExit }) {
               >
                 I give up
               </button>
-            </form>
+            </>
           )}
 
           {finished && (

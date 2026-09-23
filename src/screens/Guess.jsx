@@ -10,6 +10,7 @@ import DuelSpectator from '../components/DuelSpectator'
 import DuelNotice from '../components/DuelNotice'
 import TurnBackGate from '../components/TurnBackGate'
 import ShareResult from '../components/ShareResult'
+import WordMeaning from '../components/WordMeaning'
 import { fetchDuelForGuesser, fetchDuelSpectator, fetchThread, submitGuess } from '../lib/duelsApi'
 import { isOwnDuel } from '../lib/localIdentity'
 import { getEraByBand, findWord } from '../lib/wordbank'
@@ -17,31 +18,10 @@ import { deriveKeyStates } from '../lib/keyboardLogic'
 import { useGuessInput } from '../lib/useGuessInput'
 import { track } from '../lib/plausible'
 
-// The bank's meanings are written as bare phrases ("Be right back"); on the
-// finished screen they stand as a sentence of their own, so close them.
-function asSentence(text) {
-  return /[.!?…]$/.test(text) ? text : `${text}.`
-}
-
 // "the word was **sadge**" — the word as stored, lowercase, matching how the
 // bank and the grid spell it. Rendered the same way on won/lost/expired.
 function RevealedWord({ word }) {
   return <strong>{word}</strong>
-}
-
-// Meaning first, then origin and year quieter on a second line. Omitted
-// entirely when the bank doesn't know the word (see findWord) — no
-// placeholder, no "meaning unavailable".
-function WordMeaning({ entry }) {
-  if (!entry) return null
-  return (
-    <div className="word-meaning">
-      <p className="word-meaning__meaning">{asSentence(entry.meaning)}</p>
-      {(entry.origin || entry.year) && (
-        <p className="word-meaning__origin">{[entry.origin, entry.year].filter(Boolean).join(' · ')}</p>
-      )}
-    </div>
-  )
 }
 
 export default function Guess({ slug, onFinished, onSetOwn }) {

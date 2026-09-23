@@ -7,6 +7,10 @@
   --green: #4c9a5a;
   --yellow: #c9a227;
   --grey: #7a7570;
+
+  /* The unfilled tile outline. Named because the reveal animates away from it
+     and back to it (see tile-ink), so the two have to agree. */
+  --tile-line: #c9c3b8;
 }
 
 * {
@@ -72,15 +76,22 @@ h1 + p {
 }
 
 .tile {
+  position: relative;
   width: 44px;
   height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  border: 2px solid #c9c3b8;
+  border: 2px solid var(--tile-line);
   border-radius: 6px;
   color: var(--ink);
+}
+
+/* Sits above the ink wash, which is a positioned pseudo-element and would
+   otherwise paint over the letter. */
+.tile__letter {
+  position: relative;
 }
 
 .tile-empty {
@@ -92,21 +103,26 @@ h1 + p {
   border-color: var(--ink);
 }
 
+/* --fb is the tile's own feedback colour, named once so the reveal rules
+   below can wash in "whatever this tile turned out to be" instead of carrying
+   three near-identical copies of every rule. */
 .tile-green {
-  background: var(--green);
-  border-color: var(--green);
-  color: #fff;
+  --fb: var(--green);
 }
 
 .tile-yellow {
-  background: var(--yellow);
-  border-color: var(--yellow);
-  color: #fff;
+  --fb: var(--yellow);
 }
 
 .tile-grey {
-  background: var(--grey);
-  border-color: var(--grey);
+  --fb: var(--grey);
+}
+
+.tile-green,
+.tile-yellow,
+.tile-grey {
+  background: var(--fb);
+  border-color: var(--fb);
   color: #fff;
 }
 
@@ -132,6 +148,106 @@ h1 + p {
   }
   to {
     transform: scale(1);
+  }
+}
+
+/* The reveal: a guess that has just been submitted. Colour washes across each
+   tile in turn, left to right, like ink soaking into the paper — deliberately
+   not Wordle's flip, which the rest of the grid is already close enough to.
+   GuessGrid sets the timings on the row and each tile's position in --i.
+
+   Every animation here fills both ways, so a tile holds its bare from-state
+   through its delay and its coloured to-state afterwards. That also means a
+   browser refusing to animate at all (reduced motion, below) lands on the
+   settled colours rather than leaving a row of empty tiles. */
+.guess-row--reveal .tile-green,
+.guess-row--reveal .tile-yellow,
+.guess-row--reveal .tile-grey {
+  background: transparent;
+  animation: tile-ink var(--rev-ms) ease-out both;
+  animation-delay: calc(var(--i) * var(--rev-step));
+}
+
+.guess-row--reveal .tile-green::before,
+.guess-row--reveal .tile-yellow::before,
+.guess-row--reveal .tile-grey::before {
+  content: '';
+  position: absolute;
+  /* Out to the border box, not the padding box: the border is 2px, and a wash
+     that stopped short of it would leave the tile's paper frame showing at the
+     corners after it landed. */
+  inset: -2px;
+  border-radius: 6px;
+  background: var(--fb);
+  animation: ink-bleed var(--rev-ms) ease-out both;
+  animation-delay: calc(var(--i) * var(--rev-step));
+}
+
+@keyframes ink-bleed {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
+/* The frame and the letter, switching as the wash passes them — both flip
+   outright rather than fading, so nothing is ever caught half a colour.
+
+   The letter is centred, so it turns white when the ink reaches the middle of
+   the tile. That is 34% of the way through the animation, not half: the wash
+   eases out, so it covers the first half of the tile in about a third of the
+   time. Switching at the halfway mark instead leaves the letter briefly dark
+   on a colour it should already be legible against.
+
+   The frame holds paper until the very end, because the wash runs out over
+   the border (inset: -2px above) and is the only thing colouring it until
+   then. */
+@keyframes tile-ink {
+  from {
+    border-color: var(--tile-line);
+    color: var(--ink);
+  }
+  33% {
+    border-color: var(--tile-line);
+    color: var(--ink);
+  }
+  34% {
+    border-color: var(--tile-line);
+    color: #fff;
+  }
+  99% {
+    border-color: var(--tile-line);
+    color: #fff;
+  }
+  to {
+    border-color: var(--fb);
+    color: #fff;
+  }
+}
+
+/* Solved. A winning row is all green by definition, so one selector covers it.
+   It bounces only after its own wash has landed — hence --bounce-start — and
+   the screens hold the finished copy back until this is done. */
+.guess-row--win .tile-green {
+  animation:
+    tile-ink var(--rev-ms) ease-out both,
+    tile-bounce var(--bounce-ms) ease-in-out both;
+  animation-delay:
+    calc(var(--i) * var(--rev-step)),
+    calc(var(--bounce-start) + var(--i) * var(--bounce-step));
+}
+
+@keyframes tile-bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-9px);
+  }
+  70% {
+    transform: translateY(2px);
   }
 }
 
@@ -234,6 +350,29 @@ h1 + p {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+/* The result landing on the page. A stamp rather than a fade: the whole look
+   is scrapbook, and this is the one line of a round worth pressing down.
+   Plays on mount, which is the only time the finished copy appears. */
+.result-stamp {
+  animation: stamp-in 300ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  transform-origin: 20% 50%;
+}
+
+@keyframes stamp-in {
+  from {
+    opacity: 0;
+    transform: scale(1.18) rotate(-2.5deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.985) rotate(0.4deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
 }
 
 .word-reveal p {
@@ -781,11 +920,32 @@ input[type="text"] {
 @media (prefers-reduced-motion: reduce) {
   .key--rejected,
   .key--pressed,
-  .guess-row--typed .tile-typed {
+  .guess-row--typed .tile-typed,
+  .guess-row--win .tile-green,
+  .result-stamp {
     animation: none;
   }
 
   .key:active {
     transform: none;
+  }
+
+  /* The wash is the only motion here that carries information — it is what
+     puts the colour on the tile. Dropped to a plain fade so the row still
+     arrives rather than appearing mid-sweep. */
+  .guess-row--reveal .tile-green,
+  .guess-row--reveal .tile-yellow,
+  .guess-row--reveal .tile-grey {
+    background: var(--fb);
+    border-color: var(--fb);
+    color: #fff;
+    animation: none;
+  }
+
+  .guess-row--reveal .tile-green::before,
+  .guess-row--reveal .tile-yellow::before,
+  .guess-row--reveal .tile-grey::before {
+    animation: none;
+    clip-path: inset(0);
   }
 }

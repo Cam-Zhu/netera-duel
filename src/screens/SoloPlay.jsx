@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import EraPicker from '../components/EraPicker'
 import EraSkinProvider from '../components/EraSkinProvider'
 import HowToPlay from '../components/HowToPlay'
 import HintBanner from '../components/HintBanner'
-import GuessGrid from '../components/GuessGrid'
+import GuessGrid, { celebrationDurationMs, revealDurationMs } from '../components/GuessGrid'
 import Keyboard from '../components/Keyboard'
 import { getEraById, getRandomWord, getRandomEra } from '../lib/wordbank'
 import { computeFeedback } from '../lib/gridLogic'
@@ -21,14 +21,28 @@ export default function SoloPlay({ onExit }) {
   const [word, setWord] = useState(null)
   const [guesses, setGuesses] = useState([])
   const [status, setStatus] = useState('pending')
+  // True while the guess that just landed is still washing into the grid.
+  // Every guess holds, not only the last one: the keypad derives its colours
+  // from the guess list, so without this it lights up the new letters while
+  // the grid is still working through them. On the final guess the hold also
+  // keeps the finished copy — which replaces the keypad — from yanking the
+  // layout out from under an animation the player is still watching.
+  const [revealing, setRevealing] = useState(false)
+  const revealTimer = useRef(null)
 
   const era = eraId ? getEraById(eraId) : null
   const finished = status !== 'pending'
-  const keyStates = deriveKeyStates(guesses)
+  const showFinished = finished && !revealing
+  // The keypad holds off on the guess that's still washing in: it would
+  // otherwise colour its keys the instant the guess landed, handing over the
+  // answer a second before the grid gets to show it.
+  const keyStates = deriveKeyStates(revealing ? guesses.slice(0, -1) : guesses)
+
+  useEffect(() => () => clearTimeout(revealTimer.current), [])
 
   const { input, setInput, pressKey, pressBackspace, pressEnter, rejection, press, shortfall } = useGuessInput({
     wordLength: word?.word.length ?? 0,
-    active: !!word && !finished,
+    active: !!word && !finished && !revealing,
     onSubmit: handleSubmit,
     keyStates,
   })
@@ -39,6 +53,8 @@ export default function SoloPlay({ onExit }) {
     setGuesses([])
     setInput('')
     setStatus('pending')
+    clearTimeout(revealTimer.current)
+    setRevealing(false)
     track('Solo Game Started', { era: getEraById(id).name, method })
   }
 
@@ -53,6 +69,13 @@ export default function SoloPlay({ onExit }) {
     const won = value.toLowerCase() === word.word.toLowerCase()
     const nextStatus = won ? 'won' : nextGuesses.length >= MAX_GUESSES ? 'lost' : 'pending'
     setStatus(nextStatus)
+
+    // A win has the bounce to get through as well as the wash.
+    const hold = won ? celebrationDurationMs(word.word.length) : revealDurationMs(word.word.length)
+    setRevealing(true)
+    clearTimeout(revealTimer.current)
+    revealTimer.current = setTimeout(() => setRevealing(false), hold)
+
     if (nextStatus !== 'pending') {
       track('Solo Game Finished', { result: nextStatus, guess_count: nextGuesses.length, era: era.name })
     }
@@ -85,9 +108,10 @@ export default function SoloPlay({ onExit }) {
             pastGuesses={guesses}
             currentInput={finished ? '' : input}
             shake={shortfall}
+            celebrate={status === 'won'}
           />
 
-          {!finished && (
+          {!showFinished && (
             <>
               {/* Always rendered, even when empty: appearing on demand would
                   shove the keypad down mid-tap. aria-live carries it to
@@ -109,7 +133,11 @@ export default function SoloPlay({ onExit }) {
               <button
                 type="button"
                 className="button-secondary"
+                // Still on screen through the reveal, so the layout doesn't
+                // shift mid-animation — but the round is already decided by
+                // then, and giving up must not overwrite a win.
                 onClick={() => {
+                  if (finished) return
                   track('Solo Game Given Up', { era: era.name, guess_count: guesses.length })
                   setStatus('gave_up')
                 }}
@@ -119,12 +147,12 @@ export default function SoloPlay({ onExit }) {
             </>
           )}
 
-          {finished && (
+          {showFinished && (
             <>
               {/* Same reveal as a finished duel (Guess.jsx): bold word, no
                   quotes. No meaning line here — the hint banner above is
                   already the meaning in solo. */}
-              <p>
+              <p className="result-stamp">
                 {status === 'won' && `Solved it in ${guesses.length}!`}
                 {status === 'lost' && (
                   <>

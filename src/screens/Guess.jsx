@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import HintBanner from '../components/HintBanner'
-import GuessGrid from '../components/GuessGrid'
+import GuessGrid, { celebrationDurationMs, revealDurationMs } from '../components/GuessGrid'
 import Keyboard from '../components/Keyboard'
 import EraSkinProvider from '../components/EraSkinProvider'
 import HowToPlay from '../components/HowToPlay'
@@ -68,6 +68,14 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
   // signature mid-deploy). Bumping `attempt` re-runs the fetch.
   const [loadState, setLoadState] = useState('loading')
   const [attempt, setAttempt] = useState(0)
+  // True while the guess that just landed is still washing into the grid —
+  // see the note in SoloPlay for why every guess holds, not only the last.
+  // Only ever set by a submit from this device: a finished duel opened fresh
+  // has nothing to animate and shows its result straight away.
+  const [revealing, setRevealing] = useState(false)
+  const revealTimer = useRef(null)
+
+  useEffect(() => () => clearTimeout(revealTimer.current), [])
 
   useEffect(() => {
     let cancelled = false
@@ -94,6 +102,9 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
   }, [slug, attempt])
 
   const finished = !!duel && duel.status !== 'pending'
+  // The result waits for the grid; the fetches below don't, so the tally and
+  // the revealed word are already in hand by the time the copy appears.
+  const showFinished = finished && !revealing
   const threadId = duel?.thread_id
 
   // The tally only matters once this duel is done — and it's the nudge to
@@ -150,11 +161,14 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
   const unplayedTurnBack =
     !!duel && !!duel.parent_slug && duel.status === 'pending' && duel.guesses.length === 0
   const gateBlocking = unplayedTurnBack && !gatePassed && !isOwnDuel(duel.parent_slug)
-  const keyStates = deriveKeyStates(duel?.guesses ?? [])
+  // The keypad holds off on the guess that's still washing in — see the note
+  // in SoloPlay: coloured keys would give the row away before the grid does.
+  const allGuesses = duel?.guesses ?? []
+  const keyStates = deriveKeyStates(revealing ? allGuesses.slice(0, -1) : allGuesses)
 
   const { input, setInput, pressKey, pressBackspace, pressEnter, rejection, press, shortfall } = useGuessInput({
     wordLength: duel?.word_length ?? 0,
-    active: !!duel && !finished && !takenStage && !gateBlocking && !submitting,
+    active: !!duel && !finished && !takenStage && !gateBlocking && !submitting && !revealing,
     onSubmit: handleSubmit,
     keyStates,
   })
@@ -251,6 +265,15 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
         guess_count: result.guess_count,
       }))
       setInput('')
+
+      // A win has the bounce to get through as well as the wash.
+      const hold =
+        result.status === 'won'
+          ? celebrationDurationMs(duel.word_length)
+          : revealDurationMs(duel.word_length)
+      setRevealing(true)
+      clearTimeout(revealTimer.current)
+      revealTimer.current = setTimeout(() => setRevealing(false), hold)
     } catch (err) {
       if (err.message === 'DUEL_TAKEN') {
         setTakenStage('guess')
@@ -274,9 +297,10 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
         pastGuesses={pastGuesses}
         currentInput={finished ? '' : input}
         shake={shortfall}
+        celebrate={duel.status === 'won'}
       />
 
-      {!finished && (
+      {!showFinished && (
         <>
           {error && <p className="error-text">{error}</p>}
           {/* Always rendered, even when empty: appearing on demand would
@@ -298,9 +322,9 @@ export default function Guess({ slug, onFinished, onSetOwn }) {
         </>
       )}
 
-      {finished && (
+      {showFinished && (
         <>
-          <div className="word-reveal">
+          <div className="word-reveal result-stamp">
             <p>
               {duel.status === 'won' && `Solved it in ${duel.guess_count}!`}
               {duel.status === 'lost' &&

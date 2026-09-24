@@ -158,7 +158,7 @@ export default function SoloPlay({ onExit }) {
 
   return (
     <EraSkinProvider eraId={era?.id}>
-      <HowToPlay />
+      <HowToPlay variant="solo" />
       <h1>Solo play</h1>
 
       {!era && (

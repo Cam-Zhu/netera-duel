@@ -30,7 +30,7 @@ function navigate(path) {
 
 // Must match the <title> in index.html — that's what a crawler sees before
 // JS runs, and what the tab shows on first paint, so the two shouldn't differ.
-const HOME_TITLE = 'NetEra Duel — word duels from 25 years of internet slang'
+const HOME_TITLE = 'NetEra Duel: word duels from 25 years of internet slang'
 const SOLO_TITLE = 'Solo play · NetEra Duel'
 
 export default function App() {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { getEras, getEraById } from '../lib/wordbank'
 import { summarise } from '../lib/soloHistory'
+import SoloRating from './SoloRating'
 
 // Rounds are stamped in UTC and read back in whatever the device calls home;
 // the list is a personal log, so "23 Sep, 14:32" is all it needs to be.
@@ -38,6 +39,9 @@ export default function SoloHistory({ rows, onClear, onClose }) {
 
   return (
     <div className="solo-history">
+      {/* The % in the corner this screen leaves free — the ? button belongs
+          to the play screen, and only one of the two is ever mounted. */}
+      <SoloRating rows={rows} />
       <h2>Your solo record</h2>
 
       {!rows.length && <p>Nothing here yet — play a round and it'll show up.</p>}

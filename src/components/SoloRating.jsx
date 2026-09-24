@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { track } from '../lib/plausible'
-import { rate, MIN_ROUNDS, WINDOW } from '../lib/soloRating'
+import { rate, MIN_ROUNDS } from '../lib/soloRating'
 
 // The verdict behind the % in the corner of the record screen. Built like
 // HowToPlay — same fixed corner button, same modal shell — because it's the
@@ -77,12 +77,6 @@ export default function SoloRating({ rows }) {
                 </p>
               </>
             )}
-
-            <p className="solo-rating__method">
-              Scored on your last {WINDOW} rounds: a solve is worth 100 minus 8 a guess, so a
-              first-guess win banks 100 and a sixth-guess win banks 60. A miss is worth nothing.
-              It moves as you play.
-            </p>
           </div>
         </div>
       )}

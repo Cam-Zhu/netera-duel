@@ -972,16 +972,6 @@ input[type="text"] {
   color: #55504a;
 }
 
-/* How the number was arrived at, in the small print it deserves: the verdict
-   is the point, the arithmetic is for whoever disputes it. */
-.solo-rating__method {
-  margin: 0;
-  padding-top: 12px;
-  border-top: 1px solid #c9c3b8;
-  font-size: 12px;
-  color: #55504a;
-}
-
 
 @media (prefers-reduced-motion: reduce) {
   .h2h--enter .h2h__round,

@@ -7,13 +7,18 @@ import { rate, MIN_ROUNDS, WINDOW } from '../lib/soloRating'
 // same gesture, and the record screen doesn't render the ? so the corner is
 // free.
 //
+// "NetEra rating" is the second deliberate use of the wordmark capital in
+// running text, after the tab title — Cam's call, 24 Sep 2026. The rating is
+// the game's own verdict rather than a generic one, and the heading says so.
+// Don't "correct" it to Netera.
+//
 // The button is shown from round one rather than appearing at ten. An icon
 // that materialises unannounced is invisible as a goal; a locked one that
 // says how far off it is gives the player something to be ten rounds into.
 export default function SoloRating({ rows }) {
   const [open, setOpen] = useState(false)
   const rating = rate(rows)
-  const label = rating.unlocked ? 'Your slang rating' : 'Your slang rating (locked)'
+  const label = rating.unlocked ? 'Your NetEra rating' : 'Your NetEra rating (locked)'
 
   const openModal = () => {
     setOpen(true)
@@ -45,7 +50,7 @@ export default function SoloRating({ rows }) {
             >
               ✕
             </button>
-            <h2>Your slang rating</h2>
+            <h2>Your NetEra rating</h2>
 
             {rating.unlocked ? (
               <>

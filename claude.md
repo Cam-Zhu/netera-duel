@@ -2,7 +2,7 @@
 
 *Net + Era. Friend-vs-friend word duels, drawn from 25 years of internet slang.*
 
-**Naming:** "Netera Duel" is canonical everywhere — code, domain, URLs, all copy. "NetEra" (internal capital) is a logo/wordmark-only stylisation, not used in running text, with one deliberate exception: the browser tab title (`<title>`) starts with "NetEra Duel" (followed by an SEO tagline on the home page, or a per-duel title on `/d/*`).
+**Naming:** "Netera Duel" is canonical everywhere — code, domain, URLs, all copy. "NetEra" (internal capital) is a logo/wordmark-only stylisation, not used in running text, with two deliberate exceptions: the browser tab title (`<title>`) starts with "NetEra Duel" (followed by an SEO tagline on the home page, or a per-duel title on `/d/*`), and solo play's "Your NetEra rating" modal, where the wordmark is doing the work of saying whose verdict it is.
 
 ## Concept
 

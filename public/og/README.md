@@ -1,11 +1,13 @@
-# Per-era images
+# Era images
 
-Two separate sets live here, both keyed by era band (the smallint 1–5):
+Two sets keyed by era band (the smallint 1–5), plus one that belongs to no
+band at all:
 
 | Files | Size | Used by | Seen by |
 |---|---|---|---|
 | `era-1..5.jpg` | 1200 × 630 | `netlify/edge-functions/og.js` | link-unfurling crawlers |
 | `banner-1..5.jpg` | 1200 × 400 | `src/components/EraBanner.jsx` | players, on the word-picker screen |
+| `banner-solo.jpg` | 1200 × 400 | `src/components/EraBanner.jsx` | players, on the solo era picker |
 
 They are **not interchangeable**. The share cards carry the NET/ERA DUEL
 wordmark in a clear centre field, which is right for a card competing in a chat
@@ -76,6 +78,22 @@ above the image, so anything lettered here duplicates it.
 
 `ERA-BANNER-BRIEF.md` in the repo root is the full art brief these were made
 from; reuse it if the set ever needs extending or redoing.
+
+## The all-eras banner (`banner-solo.jpg`)
+
+Same 1200 × 400 shape and same budget, and it goes through the same component:
+`EraBanner` takes an `src` override instead of an era, because this one has no
+`order` to be keyed by.
+
+It sits above the **solo** era picker, where nothing has been chosen yet. The
+per-era banners each say "you are in this era" — a claim that screen is not
+making — so none of them can stand in here. It is built as five torn panels in
+era order, deliberately *not* a blended rainbow, which would read as era 5
+rather than as all five. `SOLO-BANNER-BRIEF.md` in the repo root is the brief
+it was made from.
+
+Not a share card, and not reachable as one: the edge function only ever builds
+`era-<band>.jpg` from a smallint.
 
 `npm run compress:og` only touches `era-N.jpg`. The banners arrived already
 within budget, so nothing re-encodes them — if a replacement comes in heavy,

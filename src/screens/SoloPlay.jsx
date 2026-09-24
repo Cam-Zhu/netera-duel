@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import EraBanner from '../components/EraBanner'
 import EraPicker from '../components/EraPicker'
 import EraSkinProvider from '../components/EraSkinProvider'
 import HowToPlay from '../components/HowToPlay'
@@ -170,6 +171,11 @@ export default function SoloPlay({ onExit }) {
               {stats.played} solved
             </p>
           )}
+          {/* Every era at once, because none is picked yet. The five per-era
+              banners each mean "you are in this one", which is a claim this
+              screen is not making — and era 5's is the wrong kind of loud to
+              sit above a row of five equal choices. */}
+          <EraBanner src="/og/banner-solo.jpg" />
           <EraPicker selectedEraId={eraId} onSelect={(id) => startEra(id, 'browse')} />
           <button type="button" className="button-secondary" onClick={() => startEra(getRandomEra().id, 'random')}>
             🎲 Random era

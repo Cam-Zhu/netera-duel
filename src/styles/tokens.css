@@ -4,9 +4,26 @@
   --accent: #6b6b6b; /* neutral fallback until an era skin is applied */
   --accent-contrast: #EDE9E2;
 
+  /* Per-letter feedback. The names are state names, not descriptions of the
+     hue: 'green' / 'yellow' / 'grey' is what submit_guess writes into the
+     stored feedback array (0001_init.sql), so it is the vocabulary the class
+     names and these tokens have to speak, whatever colour they hold.
+
+     The present state is an amber, not Wordle's yellow. A yellow that light
+     sits too close to the paper to read as a stamp on it, and it fights the
+     louder era accents — but the deciding reason is the letter: white on the
+     old #c9a227 was 2.4:1, which is not readable. Amber takes ink at 6.3:1.
+
+     Hence a letter colour per state. The present tile being the only one with
+     a dark letter states it twice, in hue and in polarity, so a finished grid
+     survives not being able to tell green from amber — the pair that goes
+     first in deuteranopia, and goes further the deeper the amber gets. */
   --green: #4c9a5a;
-  --yellow: #c9a227;
+  --green-letter: #fff;
+  --yellow: #d98f2b;
+  --yellow-letter: var(--ink);
   --grey: #7a7570;
+  --grey-letter: #fff;
 
   /* The unfilled tile outline. Named because the reveal animates away from it
      and back to it (see tile-ink), so the two have to agree. */
@@ -103,19 +120,23 @@ h1 + p {
   border-color: var(--ink);
 }
 
-/* --fb is the tile's own feedback colour, named once so the reveal rules
-   below can wash in "whatever this tile turned out to be" instead of carrying
-   three near-identical copies of every rule. */
+/* --fb is the tile's own feedback colour and --fb-letter the letter that has
+   to stay legible on it, named once so the reveal rules below can wash in
+   "whatever this tile turned out to be" instead of carrying three
+   near-identical copies of every rule. */
 .tile-green {
   --fb: var(--green);
+  --fb-letter: var(--green-letter);
 }
 
 .tile-yellow {
   --fb: var(--yellow);
+  --fb-letter: var(--yellow-letter);
 }
 
 .tile-grey {
   --fb: var(--grey);
+  --fb-letter: var(--grey-letter);
 }
 
 .tile-green,
@@ -123,7 +144,7 @@ h1 + p {
 .tile-grey {
   background: var(--fb);
   border-color: var(--fb);
-  color: #fff;
+  color: var(--fb-letter);
 }
 
 .guess-row {
@@ -195,11 +216,15 @@ h1 + p {
 /* The frame and the letter, switching as the wash passes them — both flip
    outright rather than fading, so nothing is ever caught half a colour.
 
-   The letter is centred, so it turns white when the ink reaches the middle of
-   the tile. That is 34% of the way through the animation, not half: the wash
-   eases out, so it covers the first half of the tile in about a third of the
-   time. Switching at the halfway mark instead leaves the letter briefly dark
-   on a colour it should already be legible against.
+   The letter is centred, so it switches to --fb-letter when the ink reaches
+   the middle of the tile. That is 34% of the way through the animation, not
+   half: the wash eases out, so it covers the first half of the tile in about a
+   third of the time. Switching at the halfway mark instead leaves the letter
+   briefly dark on a colour it should already be legible against.
+
+   On the present tile --fb-letter is the ink the letter already was, so that
+   switch is a no-op and the wash just passes underneath it. Only the green
+   and grey tiles visibly flip.
 
    The frame holds paper until the very end, because the wash runs out over
    the border (inset: -2px above) and is the only thing colouring it until
@@ -215,15 +240,15 @@ h1 + p {
   }
   34% {
     border-color: var(--tile-line);
-    color: #fff;
+    color: var(--fb-letter);
   }
   99% {
     border-color: var(--tile-line);
-    color: #fff;
+    color: var(--fb-letter);
   }
   to {
     border-color: var(--fb);
-    color: #fff;
+    color: var(--fb-letter);
   }
 }
 
@@ -1024,20 +1049,20 @@ input[type="text"] {
 .key--green {
   background: var(--green);
   border-color: var(--green);
-  color: #fff;
+  color: var(--green-letter);
 }
 
 .key--yellow {
   background: var(--yellow);
   border-color: var(--yellow);
-  color: #fff;
+  color: var(--yellow-letter);
 }
 
 /* Ruled out. Still pressable for now — it types, and costs a guess. */
 .key--grey {
   background: var(--grey);
   border-color: var(--grey);
-  color: #fff;
+  color: var(--grey-letter);
   opacity: 0.75;
 }
 
@@ -1122,7 +1147,7 @@ input[type="text"] {
   .guess-row--reveal .tile-grey {
     background: var(--fb);
     border-color: var(--fb);
-    color: #fff;
+    color: var(--fb-letter);
     animation: none;
   }
 

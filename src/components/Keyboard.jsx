@@ -9,7 +9,7 @@ import { keyStateToClass } from '../lib/keyboardLogic'
 // "l8r", "w00t", "binge-watch"), and revealing that row only when the word
 // needs it would hand over most of the answer.
 //
-// Colours are the feedback greens/yellows/greys, never the era accent —
+// Colours are the feedback palette, never the era accent —
 // claude.md fixes those three as a legibility convention inside any skin,
 // and the Brainrot accent is a gradient that doesn't behave as a flat key
 // fill anyway.

@@ -17,13 +17,27 @@
      Hence a letter colour per state. The present tile being the only one with
      a dark letter states it twice, in hue and in polarity, so a finished grid
      survives not being able to tell green from amber — the pair that goes
-     first in deuteranopia, and goes further the deeper the amber gets. */
+     first in deuteranopia, and goes further the deeper the amber gets.
+
+     Absent is a recession into the paper rather than Wordle's dark slab,
+     because a dark slab gives the least informative state the most ink: it
+     dominates a finished grid and the two states worth reading have to fight
+     it. Pulling it light also fixes the pair that actually collapses without
+     hue. Green against the old #7a7570 was 1.32:1 on luminance alone — solved
+     and ruled-out looked alike — and against this it is 2.30:1.
+
+     It keeps a fill rather than going bare to the paper, because the reveal
+     wash needs something to sweep (see ink-bleed), and its own darker edge in
+     --grey-line so it still reads as a tile at 1.24:1 off the background. What
+     separates it from an unplayed tile is holding a letter at all; from a
+     typed one, that tile's ink border. */
   --green: #4c9a5a;
   --green-letter: #fff;
   --yellow: #d98f2b;
   --yellow-letter: var(--ink);
-  --grey: #7a7570;
-  --grey-letter: #fff;
+  --grey: #DAD2C5;
+  --grey-letter: #655E52;
+  --grey-line: #C4BBAA;
 
   /* The unfilled tile outline. Named because the reveal animates away from it
      and back to it (see tile-ink), so the two have to agree. */
@@ -103,6 +117,10 @@ h1 + p {
   border: 2px solid var(--tile-line);
   border-radius: 6px;
   color: var(--ink);
+
+  /* The default the absent tile overrides below: for the other two states the
+     edge is simply the fill. */
+  --fb-line: var(--fb);
 }
 
 /* Sits above the ink wash, which is a positioned pseudo-element and would
@@ -134,16 +152,19 @@ h1 + p {
   --fb-letter: var(--yellow-letter);
 }
 
+/* The one state whose edge is not its fill: the fill is too close to the
+   paper to draw the tile by itself. */
 .tile-grey {
   --fb: var(--grey);
   --fb-letter: var(--grey-letter);
+  --fb-line: var(--grey-line);
 }
 
 .tile-green,
 .tile-yellow,
 .tile-grey {
   background: var(--fb);
-  border-color: var(--fb);
+  border-color: var(--fb-line);
   color: var(--fb-letter);
 }
 
@@ -247,7 +268,7 @@ h1 + p {
     color: var(--fb-letter);
   }
   to {
-    border-color: var(--fb);
+    border-color: var(--fb-line);
     color: var(--fb-letter);
   }
 }
@@ -1061,9 +1082,8 @@ input[type="text"] {
 /* Ruled out. Still pressable for now — it types, and costs a guess. */
 .key--grey {
   background: var(--grey);
-  border-color: var(--grey);
+  border-color: var(--grey-line);
   color: var(--grey-letter);
-  opacity: 0.75;
 }
 
 .keyboard[data-disabled='true'] .key {
@@ -1073,8 +1093,11 @@ input[type="text"] {
 /* Ruled out and refused. The key stays clickable (see Keyboard.jsx) so the
    press has somewhere to land; this is what tells the player it went
    nowhere. */
+/* Always lands on a .key--grey (see Keyboard.jsx), whose fill now recedes on
+   its own — so this only has to tip it a little further, where against the old
+   dark fill it was carrying the whole effect at 0.55. */
 .key--dead {
-  opacity: 0.55;
+  opacity: 0.8;
 }
 
 .key--rejected {
@@ -1146,7 +1169,7 @@ input[type="text"] {
   .guess-row--reveal .tile-yellow,
   .guess-row--reveal .tile-grey {
     background: var(--fb);
-    border-color: var(--fb);
+    border-color: var(--fb-line);
     color: var(--fb-letter);
     animation: none;
   }
